@@ -348,7 +348,7 @@ class WishlistItemDetailScreen extends ConsumerWidget {
                       width: double.infinity,
                       child: OutlinedButton.icon(
                         icon: const Icon(Icons.open_in_new_rounded, size: 18),
-                        label: const Text('Mağaza Sayfasını Aç', style: TextStyle(fontWeight: FontWeight.w700)),
+                        label: const Text('Ürüne git ↗', style: TextStyle(fontWeight: FontWeight.w700)),
                         style: OutlinedButton.styleFrom(
                           padding: const EdgeInsets.symmetric(vertical: 16),
                           side: const BorderSide(color: AppColors.cherryAccent, width: 1.5),

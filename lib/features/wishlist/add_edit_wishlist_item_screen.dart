@@ -59,11 +59,15 @@ class _AddEditWishlistItemScreenState extends ConsumerState<AddEditWishlistItemS
     _productUrlController = TextEditingController(text: item?.productUrl ?? '');
     _notesController = TextEditingController(text: item?.notes ?? '');
 
-    final defaultCurr = ref.read(preferencesProvider).defaultCurrency;
-    _currency = item?.currency ?? defaultCurr;
+    final prefs = ref.read(preferencesProvider);
+    _currency = item?.currency ?? prefs.defaultCurrency;
 
     final collections = ref.read(collectionProvider);
-    _collectionId = item?.collectionId ?? (collections.isNotEmpty ? collections.first.id : 'col_dream');
+    final lastColId = prefs.lastSelectedCollectionId;
+    _collectionId = item?.collectionId ??
+        (lastColId != null && collections.any((c) => c.id == lastColId)
+            ? lastColId
+            : (collections.isNotEmpty ? collections.first.id : 'col_dream'));
 
     _priority = item?.priority ?? ItemPriority.medium;
     _isFavorite = item?.isFavorite ?? false;
@@ -109,6 +113,10 @@ class _AddEditWishlistItemScreenState extends ConsumerState<AddEditWishlistItemS
       createdAt: createdAt,
     );
 
+    // Save preferences
+    ref.read(preferencesProvider.notifier).updateDefaultCurrency(_currency);
+    ref.read(preferencesProvider.notifier).updateLastSelectedCollectionId(_collectionId);
+
     if (isEdit) {
       ref.read(wishlistProvider.notifier).updateItem(newItem);
     } else {
@@ -129,6 +137,7 @@ class _AddEditWishlistItemScreenState extends ConsumerState<AddEditWishlistItemS
     final isDark = theme.brightness == Brightness.dark;
     final collections = ref.watch(collectionProvider);
     final isEdit = widget.initialItem != null;
+    final shouldAutofocus = !isEdit || widget.initialItem?.title == 'Yeni dilek';
 
     return Scaffold(
       appBar: AppBar(
@@ -161,6 +170,7 @@ class _AddEditWishlistItemScreenState extends ConsumerState<AddEditWishlistItemS
                 const SizedBox(height: 8),
                 TextFormField(
                   controller: _titleController,
+                  autofocus: shouldAutofocus,
                   style: theme.textTheme.bodyLarge?.copyWith(fontSize: 16, fontWeight: FontWeight.w600),
                   decoration: const InputDecoration(
                     hintText: 'Örn: Bang & Olufsen Kulaklık',
@@ -220,7 +230,10 @@ class _AddEditWishlistItemScreenState extends ConsumerState<AddEditWishlistItemS
                               return DropdownMenuItem(value: curr, child: Text(curr));
                             }).toList(),
                             onChanged: (val) {
-                              if (val != null) setState(() => _currency = val);
+                              if (val != null) {
+                                setState(() => _currency = val);
+                                ref.read(preferencesProvider.notifier).updateDefaultCurrency(val);
+                              }
                             },
                           ),
                         ],
@@ -272,7 +285,10 @@ class _AddEditWishlistItemScreenState extends ConsumerState<AddEditWishlistItemS
                     );
                   }).toList(),
                   onChanged: (val) {
-                    if (val != null) setState(() => _collectionId = val);
+                    if (val != null) {
+                      setState(() => _collectionId = val);
+                      ref.read(preferencesProvider.notifier).updateLastSelectedCollectionId(val);
+                    }
                   },
                 ),
                 const SizedBox(height: 20),

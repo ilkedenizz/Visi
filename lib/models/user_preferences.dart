@@ -9,6 +9,7 @@ class UserPreferences {
   final ViewMode defaultViewMode;
   final bool notificationsEnabled;
   final bool hasCompletedOnboarding;
+  final String? lastSelectedCollectionId;
 
   const UserPreferences({
     this.themeMode = ThemeMode.system,
@@ -16,6 +17,7 @@ class UserPreferences {
     this.defaultViewMode = ViewMode.grid,
     this.notificationsEnabled = true,
     this.hasCompletedOnboarding = false,
+    this.lastSelectedCollectionId,
   });
 
   UserPreferences copyWith({
@@ -24,6 +26,7 @@ class UserPreferences {
     ViewMode? defaultViewMode,
     bool? notificationsEnabled,
     bool? hasCompletedOnboarding,
+    String? lastSelectedCollectionId,
   }) {
     return UserPreferences(
       themeMode: themeMode ?? this.themeMode,
@@ -31,6 +34,7 @@ class UserPreferences {
       defaultViewMode: defaultViewMode ?? this.defaultViewMode,
       notificationsEnabled: notificationsEnabled ?? this.notificationsEnabled,
       hasCompletedOnboarding: hasCompletedOnboarding ?? this.hasCompletedOnboarding,
+      lastSelectedCollectionId: lastSelectedCollectionId ?? this.lastSelectedCollectionId,
     );
   }
 
@@ -41,6 +45,7 @@ class UserPreferences {
       'defaultViewMode': defaultViewMode.name,
       'notificationsEnabled': notificationsEnabled,
       'hasCompletedOnboarding': hasCompletedOnboarding,
+      'lastSelectedCollectionId': lastSelectedCollectionId,
     };
   }
 
@@ -72,6 +77,7 @@ class UserPreferences {
       defaultViewMode: view,
       notificationsEnabled: (map['notificationsEnabled'] as bool?) ?? true,
       hasCompletedOnboarding: (map['hasCompletedOnboarding'] as bool?) ?? false,
+      lastSelectedCollectionId: map['lastSelectedCollectionId'] as String?,
     );
   }
 

@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:go_router/go_router.dart';
 import '../../core/theme/app_colors.dart';
+import '../quick_add/quick_add_bottom_sheet.dart';
 
 class MainScaffold extends StatelessWidget {
   final StatefulNavigationShell navigationShell;
@@ -74,7 +75,7 @@ class MainScaffold extends StatelessWidget {
         ),
       ),
       floatingActionButton: FloatingActionButton(
-        onPressed: () => context.push('/add-item'),
+        onPressed: () => QuickAddBottomSheet.show(context),
         child: const Icon(Icons.add_rounded, size: 28),
       ),
     );

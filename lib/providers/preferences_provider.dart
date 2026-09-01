@@ -34,6 +34,11 @@ class PreferencesNotifier extends Notifier<UserPreferences> {
     state = state.copyWith(hasCompletedOnboarding: true);
     await ref.read(storageServiceProvider).savePreferences(state);
   }
+
+  Future<void> updateLastSelectedCollectionId(String collectionId) async {
+    state = state.copyWith(lastSelectedCollectionId: collectionId);
+    await ref.read(storageServiceProvider).savePreferences(state);
+  }
 }
 
 final preferencesProvider = NotifierProvider<PreferencesNotifier, UserPreferences>(PreferencesNotifier.new);
