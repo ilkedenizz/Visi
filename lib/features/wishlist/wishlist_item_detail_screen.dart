@@ -7,6 +7,7 @@ import 'package:url_launcher/url_launcher.dart';
 
 import '../../core/theme/app_colors.dart';
 import '../../models/collection_model.dart';
+import '../../models/wish_status.dart';
 import '../../models/wishlist_item.dart';
 import '../../providers/collection_provider.dart';
 import '../../providers/wishlist_provider.dart';
@@ -122,12 +123,14 @@ class WishlistItemDetailScreen extends ConsumerWidget {
         ? collections.firstWhere((c) => c.id == item.collectionId)
         : (collections.isNotEmpty ? collections.first : null);
 
+    final isFulfilled = item.status == WishStatus.fulfilled;
+
     return Scaffold(
       body: CustomScrollView(
         slivers: [
           // Hero Image Sliver App Bar
           SliverAppBar(
-            expandedHeight: 340,
+            expandedHeight: 320,
             pinned: true,
             leading: Padding(
               padding: const EdgeInsets.all(8.0),
@@ -176,7 +179,7 @@ class WishlistItemDetailScreen extends ConsumerWidget {
                     icon: Icon(Icons.share_outlined, color: isDark ? Colors.white : AppColors.lightTextPrimary),
                     onPressed: () async {
                       HapticFeedback.lightImpact();
-                      final shareText = '${item.title}${item.price > 0 ? " (${item.currency}${item.price})" : ""}${item.productUrl != null && item.productUrl!.isNotEmpty ? "\n${item.productUrl}" : ""}';
+                      final shareText = '${item.title} ${item.type.label}${item.price > 0 ? " (${item.currency}${item.price})" : ""}';
                       await Clipboard.setData(ClipboardData(text: shareText.trim()));
                       if (context.mounted) {
                         VisiFeedback.showSuccess(context, 'Dilek kopyalandı 🍒');
@@ -246,39 +249,63 @@ class WishlistItemDetailScreen extends ConsumerWidget {
                       ),
                     ),
                   ),
+                  if (isFulfilled)
+                    Positioned(
+                      top: 100,
+                      left: 20,
+                      child: Container(
+                        padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 6),
+                        decoration: BoxDecoration(
+                          color: AppColors.cherryAccent,
+                          borderRadius: BorderRadius.circular(20),
+                          boxShadow: const [
+                            BoxShadow(color: Colors.black26, blurRadius: 8, offset: Offset(0, 3)),
+                          ],
+                        ),
+                        child: const Row(
+                          children: [
+                            Text('✨ GERÇEK OLDU', style: TextStyle(color: Colors.white, fontWeight: FontWeight.w800, fontSize: 12)),
+                          ],
+                        ),
+                      ),
+                    ),
                 ],
               ),
             ),
           ),
 
-          // Content Section
+          // Story Content Section
           SliverToBoxAdapter(
             child: Padding(
               padding: const EdgeInsets.all(20.0),
               child: Column(
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
-                  // Store & Metadata Tags
+                  // Wish Type & Collection Badges
                   Row(
                     children: [
-                      if (item.store != null && item.store!.isNotEmpty) ...[
-                        Text(
-                          item.store!.toUpperCase(),
+                      Container(
+                        padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
+                        decoration: BoxDecoration(
+                          color: AppColors.cherryAccent.withValues(alpha: 0.15),
+                          borderRadius: BorderRadius.circular(14),
+                        ),
+                        child: Text(
+                          item.type.label,
                           style: const TextStyle(
                             color: AppColors.cherryAccent,
-                            fontSize: 12,
+                            fontSize: 13,
                             fontWeight: FontWeight.w700,
-                            letterSpacing: 1.2,
                           ),
                         ),
-                        const SizedBox(width: 10),
-                      ],
+                      ),
+                      const SizedBox(width: 8),
                       if (collection != null)
                         Container(
-                          padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 4),
+                          padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
                           decoration: BoxDecoration(
                             color: isDark ? AppColors.darkCard : AppColors.blushPink,
-                            borderRadius: BorderRadius.circular(12),
+                            borderRadius: BorderRadius.circular(14),
                           ),
                           child: Row(
                             mainAxisSize: MainAxisSize.min,
@@ -298,60 +325,134 @@ class WishlistItemDetailScreen extends ConsumerWidget {
                         ),
                     ],
                   ),
-                  const SizedBox(height: 10),
+                  const SizedBox(height: 14),
 
                   // Title
                   Text(
                     item.title,
                     style: theme.textTheme.displayMedium?.copyWith(
-                      fontSize: 24,
+                      fontSize: 26,
                       fontWeight: FontWeight.w800,
                       height: 1.25,
                     ),
                   ),
-                  const SizedBox(height: 12),
+                  const SizedBox(height: 16),
 
-                  // Price & Priority Tag Row
+                  // Interactive Wish Status Selector Bar
+                  Text('DURUM', style: theme.textTheme.labelSmall),
+                  const SizedBox(height: 8),
+                  Row(
+                    children: WishStatus.values.map((st) {
+                      final isSelected = item.status == st;
+                      return Expanded(
+                        child: Padding(
+                          padding: const EdgeInsets.symmetric(horizontal: 3.0),
+                          child: InkWell(
+                            onTap: () {
+                              HapticFeedback.selectionClick();
+                              ref.read(wishlistProvider.notifier).updateItem(item.copyWith(status: st));
+                              if (st == WishStatus.fulfilled) {
+                                VisiFeedback.showSuccess(context, 'Tebrikler! Dileğin gerçek oldu ✨🍒');
+                              }
+                            },
+                            borderRadius: BorderRadius.circular(14),
+                            child: AnimatedContainer(
+                              duration: const Duration(milliseconds: 200),
+                              padding: const EdgeInsets.symmetric(vertical: 10),
+                              decoration: BoxDecoration(
+                                color: isSelected
+                                    ? AppColors.cherryAccent
+                                    : (isDark ? AppColors.darkCard : AppColors.lightCard),
+                                borderRadius: BorderRadius.circular(14),
+                                border: Border.all(
+                                  color: isSelected
+                                      ? AppColors.cherryAccent
+                                      : (isDark ? AppColors.darkCardBorder : AppColors.lightCardBorder),
+                                ),
+                              ),
+                              child: Text(
+                                st.label,
+                                textAlign: TextAlign.center,
+                                style: TextStyle(
+                                  fontSize: 12,
+                                  fontWeight: isSelected ? FontWeight.w700 : FontWeight.w500,
+                                  color: isSelected
+                                      ? Colors.white
+                                      : (isDark ? AppColors.darkTextSecondary : AppColors.lightTextSecondary),
+                                ),
+                              ),
+                            ),
+                          ),
+                        ),
+                      );
+                    }).toList(),
+                  ),
+                  const SizedBox(height: 24),
+
+                  // Target Date & Priority Row (if present)
                   Row(
                     mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                    crossAxisAlignment: CrossAxisAlignment.center,
                     children: [
-                      Text(
-                        _formatPrice(item.price, item.currency),
-                        style: theme.textTheme.displayLarge?.copyWith(
-                          fontSize: 28,
-                          fontWeight: FontWeight.w900,
-                          color: theme.colorScheme.primary,
+                      if (item.targetDate != null) ...[
+                        Row(
+                          children: [
+                            const Icon(Icons.calendar_today_rounded, size: 16, color: AppColors.cherryAccent),
+                            const SizedBox(width: 6),
+                            Text(
+                              'Hedef: ${item.targetDate!.year}',
+                              style: theme.textTheme.bodyMedium?.copyWith(
+                                fontWeight: FontWeight.w700,
+                                color: isDark ? AppColors.darkTextPrimary : AppColors.lightTextPrimary,
+                              ),
+                            ),
+                          ],
                         ),
-                      ),
+                      ],
                       Container(
-                        padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
+                        padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 4),
                         decoration: BoxDecoration(
-                          color: item.priority == ItemPriority.high
-                              ? AppColors.cherryAccent
-                              : (isDark ? AppColors.darkCard : AppColors.lightSurface),
-                          borderRadius: BorderRadius.circular(14),
+                          color: isDark ? AppColors.darkCard : AppColors.lightSurface,
+                          borderRadius: BorderRadius.circular(12),
                         ),
                         child: Text(
                           '${item.priority.label} Öncelik',
                           style: TextStyle(
                             fontSize: 12,
-                            fontWeight: FontWeight.w700,
-                            color: item.priority == ItemPriority.high
-                                ? Colors.white
-                                : (isDark ? AppColors.darkTextSecondary : AppColors.lightTextSecondary),
+                            fontWeight: FontWeight.w600,
+                            color: isDark ? AppColors.darkTextSecondary : AppColors.lightTextSecondary,
                           ),
                         ),
                       ),
                     ],
                   ),
-                  const SizedBox(height: 24),
-                  const Divider(),
                   const SizedBox(height: 20),
+                  const Divider(),
+                  const SizedBox(height: 16),
 
-                  // Notes Section
+                  // Optional Price Display (ONLY IF price > 0)
+                  if (item.price > 0) ...[
+                    Row(
+                      mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                      children: [
+                        Text('TAHMİNİ FİYAT', style: theme.textTheme.labelSmall),
+                        Text(
+                          _formatPrice(item.price, item.currency),
+                          style: theme.textTheme.displayLarge?.copyWith(
+                            fontSize: 24,
+                            fontWeight: FontWeight.w900,
+                            color: theme.colorScheme.primary,
+                          ),
+                        ),
+                      ],
+                    ),
+                    const SizedBox(height: 16),
+                    const Divider(),
+                    const SizedBox(height: 16),
+                  ],
+
+                  // Notes / Description Section
                   if (item.notes != null && item.notes!.isNotEmpty) ...[
-                    Text('NOTLAR', style: theme.textTheme.labelSmall),
+                    Text('BUNU NEDEN İSTİYORUM?', style: theme.textTheme.labelSmall),
                     const SizedBox(height: 8),
                     Container(
                       width: double.infinity,
@@ -371,19 +472,35 @@ class WishlistItemDetailScreen extends ConsumerWidget {
                     const SizedBox(height: 24),
                   ],
 
-                  // Product URL Button
+                  // Optional Store / Brand
+                  if (item.store != null && item.store!.isNotEmpty) ...[
+                    Row(
+                      children: [
+                        const Icon(Icons.storefront_outlined, size: 16, color: AppColors.cherryAccent),
+                        const SizedBox(width: 6),
+                        Text(
+                          'Mağaza / Yer: ${item.store}',
+                          style: theme.textTheme.bodyMedium?.copyWith(fontWeight: FontWeight.w600),
+                        ),
+                      ],
+                    ),
+                    const SizedBox(height: 20),
+                  ],
+
+                  // Optional Product URL Button
                   if (item.productUrl != null && item.productUrl!.isNotEmpty) ...[
                     SizedBox(
                       width: double.infinity,
-                      child: OutlinedButton.icon(
+                      child: ElevatedButton.icon(
                         icon: const Icon(Icons.open_in_new_rounded, size: 18),
-                        label: const Text('Ürüne git ↗', style: TextStyle(fontWeight: FontWeight.w700)),
-                        style: OutlinedButton.styleFrom(
-                          padding: const EdgeInsets.symmetric(vertical: 16),
-                          side: const BorderSide(color: AppColors.cherryAccent, width: 1.5),
-                          foregroundColor: AppColors.cherryAccent,
+                        label: const Text('Ürüne Git ↗', style: TextStyle(fontSize: 16, fontWeight: FontWeight.w800)),
+                        style: ElevatedButton.styleFrom(
+                          padding: const EdgeInsets.symmetric(vertical: 18),
+                          backgroundColor: AppColors.cherryAccent,
+                          foregroundColor: Colors.white,
+                          elevation: 2,
                           shape: RoundedRectangleBorder(
-                            borderRadius: BorderRadius.circular(16),
+                            borderRadius: BorderRadius.circular(18),
                           ),
                         ),
                         onPressed: () => _openProductUrl(context, item.productUrl),
@@ -392,7 +509,7 @@ class WishlistItemDetailScreen extends ConsumerWidget {
                     const SizedBox(height: 24),
                   ],
 
-                  // "Added on..." Metadata footer
+                  // Created Date Footer
                   Center(
                     child: Row(
                       mainAxisSize: MainAxisSize.min,

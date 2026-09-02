@@ -11,8 +11,8 @@ class EmptyStateWidget extends StatelessWidget {
 
   const EmptyStateWidget({
     super.key,
-    this.title = 'Dilek listen seni bekliyor',
-    this.message = 'Sevdiğin, hayal ettiğin şeyleri kaydetmeye başla.',
+    this.title = 'Henüz bir dileğin yok.',
+    this.message = 'Bir gün yapmak, öğrenmek, görmek veya sahip olmak istediğin ilk şeyi ekle.',
     this.buttonText,
     this.onButtonPressed,
     this.customIcon,
@@ -21,43 +21,43 @@ class EmptyStateWidget extends StatelessWidget {
   factory EmptyStateWidget.wishlist({VoidCallback? onAddPressed}) {
     return EmptyStateWidget(
       title: 'Henüz bir dileğin yok.',
-      message: 'Sevdiğin, hayal ettiğin parçaları kaydetmeye başla.',
-      buttonText: 'İlk Dileğini Ekle',
+      message: 'Bir gün yapmak, öğrenmek, görmek veya sahip olmak istediğin ilk şeyi ekle.',
+      buttonText: 'İlk dileğini ekle',
       onButtonPressed: onAddPressed,
     );
   }
 
   factory EmptyStateWidget.collections({VoidCallback? onCreatePressed}) {
     return EmptyStateWidget(
-      title: 'Koleksiyonların için yer aç.',
-      message: 'Dileklerini konulara, tarzlara veya moodboard\'lara göre grupla.',
-      buttonText: 'Yeni Koleksiyon Oluştur',
+      title: 'Dileklerini bir araya getir.',
+      message: 'Dileklerini konulara, hayallere veya hedeflere göre grupla.',
+      buttonText: 'Koleksiyon oluştur',
       onButtonPressed: onCreatePressed,
     );
   }
 
   factory EmptyStateWidget.favorites({VoidCallback? onExplorePressed}) {
     return EmptyStateWidget(
-      title: 'Bazı dilekler küçük bir kalbi hak eder.',
-      message: 'En çok heyecan duyduğun parçaların üzerindeki kalbe dokunarak favorilerine ekle.',
+      title: 'Bazı dilekler özel bir kalbi hak eder.',
+      message: 'En çok heyecan duyduğun dileklerin üzerindeki kalbe dokunarak favorilerine ekle.',
       buttonText: 'Tüm Dilekleri Gör',
       onButtonPressed: onExplorePressed,
     );
   }
 
-  factory EmptyStateWidget.search({VoidCallback? onClearPressed}) {
+  factory EmptyStateWidget.search({VoidCallback? onResetFilter}) {
     return EmptyStateWidget(
       title: 'Aradığın dilek bulunamadı.',
       message: 'Farklı bir arama terimi veya filtre seçeneği deneyebilirsin.',
-      buttonText: 'Aramayı Temizle',
-      onButtonPressed: onClearPressed,
+      buttonText: 'Filtreleri Sıfırla',
+      onButtonPressed: onResetFilter,
     );
   }
 
   factory EmptyStateWidget.error({String? message, VoidCallback? onRetry}) {
     return EmptyStateWidget(
       title: 'Bir şeyler ters gitti.',
-      message: message ?? 'Listen yüklenirken küçük bir aksaklık oldu. Lütfen tekrar dene.',
+      message: message ?? 'Dilek defterin yüklenirken küçük bir aksaklık oldu. Lütfen tekrar dene.',
       buttonText: 'Tekrar Dene',
       onButtonPressed: onRetry,
       customIcon: const Icon(Icons.refresh_rounded, size: 40, color: AppColors.cherryAccent),
@@ -98,7 +98,7 @@ class EmptyStateWidget extends StatelessWidget {
             ),
             const SizedBox(height: 24),
 
-            // Editorial Title
+            // Title
             Text(
               title,
               textAlign: TextAlign.center,
@@ -110,7 +110,7 @@ class EmptyStateWidget extends StatelessWidget {
             ),
             const SizedBox(height: 8),
 
-            // Body Message
+            // Message
             Text(
               message,
               textAlign: TextAlign.center,

@@ -48,7 +48,7 @@ class WishlistListTile extends StatelessWidget {
           padding: const EdgeInsets.all(10.0),
           child: Row(
             children: [
-              // Product Thumbnail Image
+              // Thumbnail Image
               ClipRRect(
                 borderRadius: BorderRadius.circular(12),
                 child: SizedBox(
@@ -59,43 +59,52 @@ class WishlistListTile extends StatelessWidget {
               ),
               const SizedBox(width: 14),
 
-              // Product Info
+              // Wish Info
               Expanded(
                 child: Column(
                   crossAxisAlignment: CrossAxisAlignment.start,
                   mainAxisSize: MainAxisSize.min,
                   children: [
-                    if (item.store != null && item.store!.isNotEmpty) ...[
-                      Text(
-                        item.store!.toUpperCase(),
-                        style: theme.textTheme.labelSmall?.copyWith(
-                          color: AppColors.cherryAccent,
-                          fontSize: 10,
-                        ),
+                    Text(
+                      item.type.label,
+                      style: theme.textTheme.labelSmall?.copyWith(
+                        color: AppColors.cherryAccent,
+                        fontSize: 10,
+                        fontWeight: FontWeight.w700,
                       ),
-                      const SizedBox(height: 2),
-                    ],
+                    ),
+                    const SizedBox(height: 2),
                     Text(
                       item.title,
                       maxLines: 1,
                       overflow: TextOverflow.ellipsis,
                       style: theme.textTheme.titleMedium?.copyWith(
                         fontSize: 15,
-                        fontWeight: FontWeight.w600,
+                        fontWeight: FontWeight.w700,
                       ),
                     ),
                     const SizedBox(height: 6),
                     Row(
                       children: [
-                        Text(
-                          _formatPrice(item.price, item.currency),
-                          style: theme.textTheme.titleLarge?.copyWith(
-                            fontSize: 15,
-                            fontWeight: FontWeight.w800,
-                            color: theme.colorScheme.primary,
+                        if (item.price > 0)
+                          Text(
+                            _formatPrice(item.price, item.currency),
+                            style: theme.textTheme.titleLarge?.copyWith(
+                              fontSize: 14,
+                              fontWeight: FontWeight.w800,
+                              color: theme.colorScheme.primary,
+                            ),
+                          )
+                        else
+                          Text(
+                            item.status.label,
+                            style: TextStyle(
+                              fontSize: 12,
+                              fontWeight: FontWeight.w600,
+                              color: isDark ? AppColors.darkTextMuted : AppColors.lightTextMuted,
+                            ),
                           ),
-                        ),
-                        if (item.priority == ItemPriority.high) ...[
+                        if (item.targetDate != null) ...[
                           const SizedBox(width: 8),
                           Container(
                             padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 2),
@@ -103,9 +112,9 @@ class WishlistListTile extends StatelessWidget {
                               color: isDark ? AppColors.darkSurface : AppColors.blushPink,
                               borderRadius: BorderRadius.circular(6),
                             ),
-                            child: const Text(
-                              'Yüksek',
-                              style: TextStyle(
+                            child: Text(
+                              '${item.targetDate!.year}',
+                              style: const TextStyle(
                                 fontSize: 10,
                                 fontWeight: FontWeight.w600,
                                 color: AppColors.cherryAccent,

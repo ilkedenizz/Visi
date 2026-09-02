@@ -1,5 +1,6 @@
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import '../models/wishlist_item.dart';
+import '../services/image_storage_service.dart';
 import 'storage_provider.dart';
 
 class WishlistNotifier extends Notifier<List<WishlistItem>> {
@@ -11,7 +12,9 @@ class WishlistNotifier extends Notifier<List<WishlistItem>> {
   @override
   List<WishlistItem> build() {
     final storageService = ref.watch(storageServiceProvider);
-    return storageService.getWishlistItems();
+    final items = storageService.getWishlistItems();
+    ImageStorageService.cleanupOrphanedImages(items);
+    return items;
   }
 
   Future<void> addItem(WishlistItem item) async {
@@ -20,6 +23,13 @@ class WishlistNotifier extends Notifier<List<WishlistItem>> {
   }
 
   Future<void> updateItem(WishlistItem updatedItem) async {
+    final oldItemIndex = state.indexWhere((item) => item.id == updatedItem.id);
+    if (oldItemIndex != -1) {
+      final oldPath = state[oldItemIndex].imagePath;
+      if (oldPath != null && oldPath != updatedItem.imagePath) {
+        await ImageStorageService.deleteLocalImage(oldPath);
+      }
+    }
     state = [
       for (final item in state)
         if (item.id == updatedItem.id) updatedItem else item
@@ -30,6 +40,10 @@ class WishlistNotifier extends Notifier<List<WishlistItem>> {
   Future<WishlistItem?> deleteItem(String id) async {
     final index = state.indexWhere((item) => item.id == id);
     if (index != -1) {
+      // Clean up previous unrestored deleted item image if different
+      if (_lastDeletedItem != null && _lastDeletedItem!.id != id) {
+        await ImageStorageService.deleteLocalImage(_lastDeletedItem!.imagePath);
+      }
       _lastDeletedItem = state[index];
       _lastDeletedIndex = index;
       final updated = List<WishlistItem>.from(state);

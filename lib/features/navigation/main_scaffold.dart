@@ -99,7 +99,7 @@ class _MainScaffoldState extends ConsumerState<MainScaffold> {
                 BottomNavigationBarItem(
                   icon: Icon(Icons.favorite_outline_rounded, size: 22),
                   activeIcon: Icon(Icons.favorite_rounded, size: 22),
-                  label: 'Wishlist',
+                  label: 'Dilekler',
                 ),
                 BottomNavigationBarItem(
                   icon: Icon(Icons.style_outlined, size: 22),

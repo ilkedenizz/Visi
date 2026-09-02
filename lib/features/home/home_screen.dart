@@ -2,10 +2,8 @@ import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
-import 'package:intl/intl.dart';
 
 import '../../core/theme/app_colors.dart';
-import '../../models/collection_model.dart';
 import '../../models/wishlist_item.dart';
 import '../../providers/collection_provider.dart';
 import '../../providers/wishlist_provider.dart';
@@ -14,14 +12,10 @@ import '../../widgets/empty_state_widget.dart';
 import '../../widgets/section_header.dart';
 import '../../widgets/visi_cherry_logo.dart';
 import '../../widgets/visi_image.dart';
+import '../quick_add/quick_add_bottom_sheet.dart';
 
 class HomeScreen extends ConsumerWidget {
   const HomeScreen({super.key});
-
-  String _formatPrice(double price, String currency) {
-    final formatter = NumberFormat('#,##0.##', 'tr_TR');
-    return '$currency${formatter.format(price)}';
-  }
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
@@ -31,13 +25,7 @@ class HomeScreen extends ConsumerWidget {
     final wishlist = ref.watch(wishlistProvider);
     final collections = ref.watch(collectionProvider);
 
-    final featuredItem = wishlist.isNotEmpty
-        ? (wishlist.any((i) => i.isFavorite)
-            ? wishlist.firstWhere((i) => i.isFavorite)
-            : wishlist.first)
-        : null;
-
-    final recentItems = wishlist.take(5).toList();
+    final recentItems = wishlist.take(6).toList();
 
     return Scaffold(
       body: SafeArea(
@@ -48,7 +36,7 @@ class HomeScreen extends ConsumerWidget {
           },
           child: CustomScrollView(
             slivers: [
-              // Editorial Header Bar Section
+              // Header Section
               SliverToBoxAdapter(
                 child: Padding(
                   padding: const EdgeInsets.fromLTRB(20, 16, 20, 12),
@@ -64,7 +52,7 @@ class HomeScreen extends ConsumerWidget {
                                 const VisiCherryLogo(size: 14, color: AppColors.cherryAccent),
                                 const SizedBox(width: 6),
                                 Text(
-                                  'VIŞI JOURNAL',
+                                  'VIŞI DILEK DEFTERI',
                                   style: TextStyle(
                                     color: isDark ? AppColors.cherryAccentDark : AppColors.cherryAccent,
                                     fontSize: 11,
@@ -76,11 +64,20 @@ class HomeScreen extends ConsumerWidget {
                             ),
                             const SizedBox(height: 6),
                             Text(
-                              'Bugün neyi istiyorsun?',
+                              'Bir gün yapmak istediklerini unutma.',
                               style: theme.textTheme.displayMedium?.copyWith(
-                                fontSize: 24,
+                                fontSize: 22,
                                 fontWeight: FontWeight.w800,
-                                letterSpacing: -0.5,
+                                letterSpacing: -0.4,
+                              ),
+                            ),
+                            const SizedBox(height: 4),
+                            Text(
+                              '${wishlist.length} dilek · ${collections.length} koleksiyon',
+                              style: TextStyle(
+                                fontSize: 12,
+                                fontWeight: FontWeight.w600,
+                                color: isDark ? AppColors.darkTextSecondary : AppColors.lightTextSecondary,
                               ),
                             ),
                           ],
@@ -115,117 +112,139 @@ class HomeScreen extends ConsumerWidget {
                   ),
                 )
               else ...[
-                // Hero Featured Wishlist Card Section
-                if (featuredItem != null)
-                  SliverToBoxAdapter(
-                    child: Padding(
-                      padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 8),
-                      child: Column(
-                        crossAxisAlignment: CrossAxisAlignment.start,
-                        children: [
-                          const SectionHeader(
-                            title: 'Öne Çıkan Dilek',
-                            subtitle: 'Günün ilham veren parçası',
+                // Sleek Quick Add Button
+                SliverToBoxAdapter(
+                  child: Padding(
+                    padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 8),
+                    child: InkWell(
+                      onTap: () {
+                        HapticFeedback.lightImpact();
+                        QuickAddBottomSheet.show(context);
+                      },
+                      borderRadius: BorderRadius.circular(20),
+                      child: Container(
+                        padding: const EdgeInsets.all(16),
+                        decoration: BoxDecoration(
+                          color: isDark ? AppColors.darkCard : AppColors.blushPink,
+                          borderRadius: BorderRadius.circular(20),
+                          border: Border.all(
+                            color: isDark ? AppColors.darkCardBorder : AppColors.cherryAccent.withValues(alpha: 0.2),
                           ),
-                          const SizedBox(height: 8),
-                          _buildHeroCard(context, ref, featuredItem, collections, isDark, theme),
-                        ],
-                      ),
-                    ),
-                  ),
-
-                // "Son Eklenenler" Horizontal Scroll Section
-                if (recentItems.isNotEmpty)
-                  SliverToBoxAdapter(
-                    child: Padding(
-                      padding: const EdgeInsets.symmetric(vertical: 16),
-                      child: Column(
-                        crossAxisAlignment: CrossAxisAlignment.start,
-                        children: [
-                          Padding(
-                            padding: const EdgeInsets.symmetric(horizontal: 20),
-                            child: SectionHeader(
-                              title: 'Son Eklenenler',
-                              subtitle: 'Listenizdeki en yeni dilekler',
-                              trailing: TextButton(
-                                onPressed: () => context.go('/wishlist'),
-                                child: Text(
-                                  'Tümünü Gör',
-                                  style: TextStyle(
-                                    color: isDark ? AppColors.cherryAccentDark : AppColors.cherryAccent,
-                                    fontWeight: FontWeight.w700,
-                                    fontSize: 13,
+                        ),
+                        child: Row(
+                          children: [
+                            Container(
+                              padding: const EdgeInsets.all(10),
+                              decoration: const BoxDecoration(
+                                color: AppColors.cherryAccent,
+                                shape: BoxShape.circle,
+                              ),
+                              child: const Icon(Icons.add_rounded, color: Colors.white, size: 20),
+                            ),
+                            const SizedBox(width: 14),
+                            Expanded(
+                              child: Column(
+                                crossAxisAlignment: CrossAxisAlignment.start,
+                                children: [
+                                  Text(
+                                    'Yeni Dilek Ekle',
+                                    style: TextStyle(
+                                      fontSize: 15,
+                                      fontWeight: FontWeight.w700,
+                                      color: isDark ? AppColors.darkTextPrimary : AppColors.lightTextPrimary,
+                                    ),
                                   ),
-                                ),
+                                  const SizedBox(height: 2),
+                                  Text(
+                                    'Bir gün yapmak, öğrenmek veya görmek istediğin şey...',
+                                    style: TextStyle(
+                                      fontSize: 12,
+                                      color: isDark ? AppColors.darkTextMuted : AppColors.lightTextMuted,
+                                    ),
+                                  ),
+                                ],
                               ),
                             ),
-                          ),
-                          const SizedBox(height: 8),
-                          SizedBox(
-                            height: 226,
-                            child: ListView.builder(
-                              padding: const EdgeInsets.symmetric(horizontal: 20),
-                              scrollDirection: Axis.horizontal,
-                              itemCount: recentItems.length,
-                              itemBuilder: (context, index) {
-                                final item = recentItems[index];
-                                return _buildRecentItemCard(context, ref, item, isDark, theme);
-                              },
+                            Icon(
+                              Icons.arrow_forward_ios_rounded,
+                              size: 16,
+                              color: isDark ? AppColors.darkTextMuted : AppColors.lightTextMuted,
                             ),
-                          ),
-                        ],
+                          ],
+                        ),
+                      ),
+                    ),
+                  ),
+                ),
+
+                // Recent Wishes Horizontal List Section
+                SliverToBoxAdapter(
+                  child: Padding(
+                    padding: const EdgeInsets.only(top: 16.0),
+                    child: SectionHeader(
+                      title: 'Son Eklenenler',
+                      subtitle: 'Listenizdeki en yeni dilekler',
+                      onTap: () => context.go('/wishlist'),
+                    ),
+                  ),
+                ),
+
+                SliverToBoxAdapter(
+                  child: SizedBox(
+                    height: 220,
+                    child: ListView.builder(
+                      scrollDirection: Axis.horizontal,
+                      padding: const EdgeInsets.symmetric(horizontal: 16),
+                      itemCount: recentItems.length,
+                      itemBuilder: (context, index) {
+                        final item = recentItems[index];
+                        return _buildRecentWishCard(context, ref, item, isDark, theme);
+                      },
+                    ),
+                  ),
+                ),
+
+                // Collections Section
+                if (collections.isNotEmpty) ...[
+                  SliverToBoxAdapter(
+                    child: Padding(
+                      padding: const EdgeInsets.only(top: 24.0),
+                      child: SectionHeader(
+                        title: 'Koleksiyonlar',
+                        subtitle: 'Moodboard ve kategorilerin',
+                        onTap: () => context.go('/collections'),
                       ),
                     ),
                   ),
 
-                // "Koleksiyonlarım" Section
-                if (collections.isNotEmpty)
                   SliverToBoxAdapter(
-                    child: Padding(
-                      padding: const EdgeInsets.fromLTRB(20, 8, 20, 24),
-                      child: Column(
-                        crossAxisAlignment: CrossAxisAlignment.start,
-                        children: [
-                          SectionHeader(
-                            title: 'Koleksiyonlar',
-                            subtitle: 'Moodboard ve kategorilerin',
-                            trailing: TextButton(
-                              onPressed: () => context.go('/collections'),
-                              child: Text(
-                                'Tümünü Gör',
-                                style: TextStyle(
-                                  color: isDark ? AppColors.cherryAccentDark : AppColors.cherryAccent,
-                                  fontWeight: FontWeight.w700,
-                                  fontSize: 13,
-                                ),
-                              ),
-                            ),
-                          ),
-                          const SizedBox(height: 12),
-                          GridView.builder(
-                            shrinkWrap: true,
-                            physics: const NeverScrollableScrollPhysics(),
-                            gridDelegate: const SliverGridDelegateWithFixedCrossAxisCount(
-                              crossAxisCount: 2,
-                              crossAxisSpacing: 14,
-                              mainAxisSpacing: 14,
-                              childAspectRatio: 1.25,
-                            ),
-                            itemCount: collections.take(4).length,
-                            itemBuilder: (context, index) {
-                              final col = collections[index];
-                              final count = wishlist.where((i) => i.collectionId == col.id).length;
-                              return CollectionCard(
+                    child: SizedBox(
+                      height: 140,
+                      child: ListView.builder(
+                        scrollDirection: Axis.horizontal,
+                        padding: const EdgeInsets.symmetric(horizontal: 16),
+                        itemCount: collections.length,
+                        itemBuilder: (context, index) {
+                          final col = collections[index];
+                          final count = wishlist.where((i) => i.collectionId == col.id).length;
+                          return Padding(
+                            padding: const EdgeInsets.only(right: 12.0),
+                            child: SizedBox(
+                              width: 170,
+                              child: CollectionCard(
                                 collection: col,
                                 itemCount: count,
-                                onTap: () => context.push('/collections/${col.id}'),
-                              );
-                            },
-                          ),
-                        ],
+                                onTap: () => context.push('/collection/${col.id}'),
+                              ),
+                            ),
+                          );
+                        },
                       ),
                     ),
                   ),
+                ],
+
+                const SliverToBoxAdapter(child: SizedBox(height: 32)),
               ],
             ],
           ),
@@ -234,189 +253,7 @@ class HomeScreen extends ConsumerWidget {
     );
   }
 
-  // Refined Editorial Hero Featured Wishlist Card
-  Widget _buildHeroCard(
-    BuildContext context,
-    WidgetRef ref,
-    WishlistItem item,
-    List<CollectionModel> collections,
-    bool isDark,
-    ThemeData theme,
-  ) {
-    final col = collections.firstWhere(
-      (c) => c.id == item.collectionId,
-      orElse: () => CollectionModel(id: '', name: 'Genel', emoji: '✨', createdAt: DateTime.now()),
-    );
-
-    return Container(
-      height: 250,
-      decoration: BoxDecoration(
-        color: isDark ? AppColors.darkCard : AppColors.lightCard,
-        borderRadius: BorderRadius.circular(24),
-        border: Border.all(
-          color: isDark ? AppColors.darkCardBorder : AppColors.lightCardBorder,
-          width: 1,
-        ),
-        boxShadow: [
-          BoxShadow(
-            color: isDark ? AppColors.darkShadowColor : AppColors.shadowColor,
-            blurRadius: 20,
-            offset: const Offset(0, 6),
-          ),
-        ],
-      ),
-      child: ClipRRect(
-        borderRadius: BorderRadius.circular(24),
-        child: InkWell(
-          onTap: () {
-            HapticFeedback.selectionClick();
-            context.push('/item/${item.id}');
-          },
-          child: Stack(
-            children: [
-              // Background Image
-              Positioned.fill(
-                child: VisiImage(imageUrl: item.imagePath),
-              ),
-
-              // Editorial Multi-stage Gradient
-              Positioned.fill(
-                child: Container(
-                  decoration: BoxDecoration(
-                    gradient: LinearGradient(
-                      begin: Alignment.topCenter,
-                      end: Alignment.bottomCenter,
-                      colors: [
-                        Colors.black.withValues(alpha: 0.35),
-                        Colors.transparent,
-                        Colors.black.withValues(alpha: 0.85),
-                      ],
-                      stops: const [0.0, 0.4, 1.0],
-                    ),
-                  ),
-                ),
-              ),
-
-              // Collection Tag (Top Left)
-              Positioned(
-                top: 16,
-                left: 16,
-                child: Container(
-                  padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 5),
-                  decoration: BoxDecoration(
-                    color: Colors.black45,
-                    borderRadius: BorderRadius.circular(14),
-                    border: Border.all(color: Colors.white24, width: 1),
-                  ),
-                  child: Row(
-                    children: [
-                      Text(col.emoji, style: const TextStyle(fontSize: 12)),
-                      const SizedBox(width: 5),
-                      Text(
-                        col.name,
-                        style: const TextStyle(
-                          color: Colors.white,
-                          fontSize: 12,
-                          fontWeight: FontWeight.w600,
-                        ),
-                      ),
-                    ],
-                  ),
-                ),
-              ),
-
-              // Favorite Heart Button (Top Right)
-              Positioned(
-                top: 16,
-                right: 16,
-                child: Material(
-                  color: Colors.black45,
-                  shape: const CircleBorder(),
-                  child: InkWell(
-                    customBorder: const CircleBorder(),
-                    onTap: () {
-                      HapticFeedback.lightImpact();
-                      ref.read(wishlistProvider.notifier).toggleFavorite(item.id);
-                    },
-                    child: Padding(
-                      padding: const EdgeInsets.all(8.0),
-                      child: AnimatedSwitcher(
-                        duration: const Duration(milliseconds: 240),
-                        transitionBuilder: (child, anim) => ScaleTransition(
-                          scale: Tween<double>(begin: 0.7, end: 1.0).animate(
-                            CurvedAnimation(parent: anim, curve: Curves.easeOutBack),
-                          ),
-                          child: child,
-                        ),
-                        child: Icon(
-                          item.isFavorite ? Icons.favorite_rounded : Icons.favorite_border_rounded,
-                          key: ValueKey(item.isFavorite),
-                          size: 20,
-                          color: item.isFavorite ? AppColors.cherryAccent : Colors.white,
-                        ),
-                      ),
-                    ),
-                  ),
-                ),
-              ),
-
-              // Bottom Details Overlay Text
-              Positioned(
-                left: 18,
-                right: 18,
-                bottom: 18,
-                child: Column(
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  children: [
-                    Row(
-                      children: [
-                        const VisiCherryLogo(size: 12, color: AppColors.cherryAccent),
-                        const SizedBox(width: 6),
-                        if (item.store != null)
-                          Text(
-                            item.store!.toUpperCase(),
-                            style: const TextStyle(
-                              color: AppColors.blushPink,
-                              fontSize: 10,
-                              fontWeight: FontWeight.w700,
-                              letterSpacing: 1.2,
-                            ),
-                          ),
-                      ],
-                    ),
-                    const SizedBox(height: 4),
-                    Text(
-                      item.title,
-                      maxLines: 1,
-                      overflow: TextOverflow.ellipsis,
-                      style: const TextStyle(
-                        color: Colors.white,
-                        fontSize: 18,
-                        fontWeight: FontWeight.w700,
-                        height: 1.2,
-                      ),
-                    ),
-                    const SizedBox(height: 6),
-                    Text(
-                      _formatPrice(item.price, item.currency),
-                      style: const TextStyle(
-                        color: Colors.white,
-                        fontSize: 17,
-                        fontWeight: FontWeight.w800,
-                      ),
-                    ),
-                  ],
-                ),
-              ),
-            ],
-          ),
-        ),
-      ),
-    );
-  }
-
-  // Refined Recent Item Horizontal Card
-  Widget _buildRecentItemCard(
+  Widget _buildRecentWishCard(
     BuildContext context,
     WidgetRef ref,
     WishlistItem item,
@@ -424,74 +261,34 @@ class HomeScreen extends ConsumerWidget {
     ThemeData theme,
   ) {
     return Container(
-      width: 156,
-      margin: const EdgeInsets.only(right: 14),
-      decoration: BoxDecoration(
-        color: isDark ? AppColors.darkCard : AppColors.lightCard,
-        borderRadius: BorderRadius.circular(20),
-        border: Border.all(
-          color: isDark ? AppColors.darkCardBorder : AppColors.lightCardBorder,
-        ),
-        boxShadow: [
-          BoxShadow(
-            color: isDark ? AppColors.darkShadowColor : AppColors.shadowColor,
-            blurRadius: 10,
-            offset: const Offset(0, 3),
-          ),
-        ],
-      ),
-      child: ClipRRect(
-        borderRadius: BorderRadius.circular(20),
+      width: 160,
+      margin: const EdgeInsets.only(right: 12),
+      child: Card(
+        elevation: 2,
+        clipBehavior: Clip.antiAlias,
+        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(18)),
         child: InkWell(
-          onTap: () {
-            HapticFeedback.selectionClick();
-            context.push('/item/${item.id}');
-          },
+          onTap: () => context.push('/item/${item.id}'),
           child: Column(
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
-              // Image container
-              SizedBox(
-                height: 116,
-                width: double.infinity,
+              Expanded(
                 child: Stack(
+                  fit: StackFit.expand,
                   children: [
-                    Positioned.fill(
-                      child: VisiImage(imageUrl: item.imagePath),
-                    ),
-                    Positioned.fill(
-                      child: Container(
-                        decoration: BoxDecoration(
-                          gradient: LinearGradient(
-                            begin: Alignment.topCenter,
-                            end: Alignment.bottomCenter,
-                            colors: [
-                              Colors.black.withValues(alpha: 0.1),
-                              Colors.transparent,
-                              Colors.black.withValues(alpha: 0.05),
-                            ],
-                          ),
-                        ),
-                      ),
-                    ),
+                    VisiImage(imageUrl: item.imagePath),
                     Positioned(
                       top: 6,
-                      right: 6,
-                      child: InkWell(
-                        onTap: () {
-                          HapticFeedback.lightImpact();
-                          ref.read(wishlistProvider.notifier).toggleFavorite(item.id);
-                        },
-                        child: CircleAvatar(
-                          radius: 12,
-                          backgroundColor: isDark ? Colors.black54 : Colors.white.withValues(alpha: 0.87),
-                          child: Icon(
-                            item.isFavorite ? Icons.favorite_rounded : Icons.favorite_border_rounded,
-                            size: 13,
-                            color: item.isFavorite
-                                ? AppColors.cherryAccent
-                                : (isDark ? Colors.white70 : AppColors.lightTextSecondary),
-                          ),
+                      left: 6,
+                      child: Container(
+                        padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 3),
+                        decoration: BoxDecoration(
+                          color: (isDark ? Colors.black87 : Colors.white).withValues(alpha: 0.9),
+                          borderRadius: BorderRadius.circular(8),
+                        ),
+                        child: Text(
+                          item.type.label,
+                          style: const TextStyle(fontSize: 9, fontWeight: FontWeight.w700),
                         ),
                       ),
                     ),
@@ -503,39 +300,27 @@ class HomeScreen extends ConsumerWidget {
                 child: Column(
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
-                    if (item.store != null && item.store!.isNotEmpty) ...[
-                      Text(
-                        item.store!.toUpperCase(),
-                        maxLines: 1,
-                        overflow: TextOverflow.ellipsis,
-                        style: TextStyle(
-                          fontSize: 9,
-                          fontWeight: FontWeight.w700,
-                          letterSpacing: 1.0,
-                          color: isDark ? AppColors.cherryAccentDark : AppColors.cherryAccent,
-                        ),
-                      ),
-                      const SizedBox(height: 2),
-                    ],
                     Text(
                       item.title,
                       maxLines: 2,
                       overflow: TextOverflow.ellipsis,
-                      style: theme.textTheme.titleSmall?.copyWith(
-                        fontSize: 12,
-                        fontWeight: FontWeight.w600,
-                        height: 1.25,
-                      ),
+                      style: theme.textTheme.titleSmall?.copyWith(fontWeight: FontWeight.w700, fontSize: 12),
                     ),
-                    const SizedBox(height: 6),
-                    Text(
-                      _formatPrice(item.price, item.currency),
-                      style: theme.textTheme.titleMedium?.copyWith(
-                        fontSize: 13,
-                        fontWeight: FontWeight.w800,
-                        color: theme.colorScheme.primary,
+                    const SizedBox(height: 4),
+                    if (item.price > 0)
+                      Text(
+                        '₺${item.price.toStringAsFixed(0)}',
+                        style: const TextStyle(fontSize: 11, fontWeight: FontWeight.w800, color: AppColors.cherryAccent),
+                      )
+                    else
+                      Text(
+                        item.status.label,
+                        style: TextStyle(
+                          fontSize: 10,
+                          fontWeight: FontWeight.w600,
+                          color: isDark ? AppColors.darkTextMuted : AppColors.lightTextMuted,
+                        ),
                       ),
-                    ),
                   ],
                 ),
               ),

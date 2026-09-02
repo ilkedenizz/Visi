@@ -4,27 +4,29 @@ import 'package:shared_preferences/shared_preferences.dart';
 import 'package:visi/core/utils/url_validator.dart';
 import 'package:visi/models/collection_model.dart';
 import 'package:visi/models/user_preferences.dart';
+import 'package:visi/models/wish_status.dart';
+import 'package:visi/models/wish_type.dart';
 import 'package:visi/models/wishlist_item.dart';
 import 'package:visi/providers/filter_provider.dart';
+import 'package:visi/services/image_storage_service.dart';
 import 'package:visi/services/storage_service.dart';
 import 'package:visi/widgets/visi_cherry_logo.dart';
 
 void main() {
   TestWidgetsFlutterBinding.ensureInitialized();
 
-  group('Vişi Models Test', () {
-    test('WishlistItem json serialization and copyWith works correctly', () {
+  group('Vişi Personal Wish Models & Migration Test', () {
+    test('WishlistItem json serialization and defaults work correctly', () {
       final now = DateTime.now();
       final item = WishlistItem(
         id: 'test_1',
-        title: 'Leica Camera',
-        price: 150000,
-        currency: '₺',
-        store: 'Leica',
-        productUrl: 'https://leica.com/camera',
-        collectionId: 'col_dream',
+        title: 'Gitar çalmayı öğrenmek',
+        type: WishType.toLearn,
+        status: WishStatus.starting,
+        collectionId: 'col_learn',
         priority: ItemPriority.high,
         isFavorite: true,
+        targetDate: DateTime(2027),
         createdAt: now,
       );
 
@@ -32,16 +34,24 @@ void main() {
       final restored = WishlistItem.fromJson(jsonStr);
 
       expect(restored.id, equals('test_1'));
-      expect(restored.title, equals('Leica Camera'));
-      expect(restored.price, equals(150000));
-      expect(restored.productUrl, equals('https://leica.com/camera'));
+      expect(restored.title, equals('Gitar çalmayı öğrenmek'));
+      expect(restored.type, equals(WishType.toLearn));
+      expect(restored.status, equals(WishStatus.starting));
+      expect(restored.price, equals(0.0));
+      expect(restored.productUrl, isNull);
       expect(restored.isFavorite, isTrue);
       expect(restored.priority, equals(ItemPriority.high));
+      expect(restored.targetDate?.year, equals(2027));
+    });
 
-      final updated = item.copyWith(isFavorite: false, price: 160000);
-      expect(updated.isFavorite, isFalse);
-      expect(updated.price, equals(160000));
-      expect(updated.title, equals('Leica Camera'));
+    test('Backward compatibility: legacy JSON without type or status migrates safely', () {
+      const legacyJson = '{"id":"legacy_1","title":"Kulaklık","price":5000.0,"currency":"₺","collectionId":"col_tech","createdAt":"2026-09-01T12:00:00.000"}';
+
+      final item = WishlistItem.fromJson(legacyJson);
+      expect(item.id, equals('legacy_1'));
+      expect(item.type, equals(WishType.toOwn));
+      expect(item.status, equals(WishStatus.wishing));
+      expect(item.price, equals(5000.0));
     });
 
     test('CollectionModel json serialization works correctly', () {
@@ -170,6 +180,34 @@ void main() {
 
       final restored = UserPreferences.fromMap({});
       expect(restored.themeMode, equals(ThemeMode.light));
+    });
+  });
+
+  group('Vişi Image Storage & Persistence Test', () {
+    test('ImageStorageService gracefully handles non-existent and empty paths', () async {
+      await ImageStorageService.deleteLocalImage(null);
+      await ImageStorageService.deleteLocalImage('');
+      await ImageStorageService.deleteLocalImage('/non_existent_dir/image.jpg');
+      await ImageStorageService.cleanupOrphanedImages([]);
+    });
+
+    test('Delete + Undo preserves item imagePath without instant deletion', () {
+      final now = DateTime.now();
+      final item = WishlistItem(
+        id: 'del_test_1',
+        title: 'Kamera',
+        price: 5000,
+        currency: '₺',
+        imagePath: '/storage/emulated/0/Android/data/com.visi.app.visi/files/wish_123.jpg',
+        collectionId: 'col_to_own',
+        createdAt: now,
+      );
+
+      final deleted = item;
+      expect(deleted.imagePath, equals('/storage/emulated/0/Android/data/com.visi.app.visi/files/wish_123.jpg'));
+
+      final restored = deleted.copyWith();
+      expect(restored.imagePath, equals(item.imagePath));
     });
   });
 

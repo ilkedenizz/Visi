@@ -18,9 +18,11 @@ class StorageService {
   }
 
   Future<void> _ensureInitialSeedData() async {
+    const seedVersionKey = 'seed_version_v1.0_journal';
     final isFirstLaunch = _prefs.getBool(AppConstants.storageKeyIsFirstLaunch) ?? true;
+    final hasV1Seed = _prefs.getBool(seedVersionKey) ?? false;
 
-    if (isFirstLaunch) {
+    if (isFirstLaunch || !hasV1Seed) {
       // Seed initial sample collections
       await saveCollections(MockData.sampleCollections);
       // Seed initial sample items
@@ -29,6 +31,7 @@ class StorageService {
       await savePreferences(const UserPreferences());
 
       await _prefs.setBool(AppConstants.storageKeyIsFirstLaunch, false);
+      await _prefs.setBool(seedVersionKey, true);
     }
   }
 

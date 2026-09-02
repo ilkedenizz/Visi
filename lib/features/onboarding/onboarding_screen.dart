@@ -148,7 +148,7 @@ class _OnboardingScreenState extends ConsumerState<OnboardingScreen> {
                         ),
                       ),
                       child: Text(
-                        _currentPage == 2 ? 'Başla' : 'Devam Et',
+                        _currentPage == 2 ? 'Vişi\'yi Keşfet ✨' : 'Devam Et',
                         style: const TextStyle(
                           fontSize: 16,
                           fontWeight: FontWeight.w700,
@@ -172,7 +172,6 @@ class _OnboardingScreenState extends ConsumerState<OnboardingScreen> {
       child: Column(
         mainAxisAlignment: MainAxisAlignment.center,
         children: [
-          // Hero Symbol
           Container(
             width: 110,
             height: 110,
@@ -194,7 +193,7 @@ class _OnboardingScreenState extends ConsumerState<OnboardingScreen> {
           const SizedBox(height: 40),
 
           Text(
-            'Değerli Şeylerin Yeri.',
+            'Dileklerini unutma.',
             textAlign: TextAlign.center,
             style: theme.textTheme.displayMedium?.copyWith(
               fontSize: 28,
@@ -206,7 +205,7 @@ class _OnboardingScreenState extends ConsumerState<OnboardingScreen> {
           const SizedBox(height: 14),
 
           Text(
-            'Vişi, hayal ettiğin ve saklamak istediğin tüm özel parçaları tek bir estetik alanda toplaman için tasarlandı.',
+            'Bir gün yapmak, öğrenmek veya görmek istediğin şeyleri Vişi\'de biriktir.',
             textAlign: TextAlign.center,
             style: theme.textTheme.bodyMedium?.copyWith(
               fontSize: 15,
@@ -225,120 +224,36 @@ class _OnboardingScreenState extends ConsumerState<OnboardingScreen> {
       child: Column(
         mainAxisAlignment: MainAxisAlignment.center,
         children: [
-          // Visual Mock Wishlist Preview Card
           Container(
-            width: double.infinity,
-            padding: const EdgeInsets.all(16),
+            width: 100,
+            height: 100,
             decoration: BoxDecoration(
-              color: isDark ? AppColors.darkCard : AppColors.lightCard,
-              borderRadius: BorderRadius.circular(24),
-              border: Border.all(
-                color: isDark ? AppColors.darkCardBorder : AppColors.lightCardBorder,
-              ),
-              boxShadow: [
-                BoxShadow(
-                  color: Colors.black.withValues(alpha: isDark ? 0.3 : 0.06),
-                  blurRadius: 20,
-                  offset: const Offset(0, 8),
-                ),
-              ],
+              color: isDark ? AppColors.darkCard : AppColors.blushPink,
+              shape: BoxShape.circle,
             ),
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                Container(
-                  height: 150,
-                  width: double.infinity,
-                  decoration: BoxDecoration(
-                    borderRadius: BorderRadius.circular(16),
-                    image: const DecorationImage(
-                      image: NetworkImage(
-                        'https://images.unsplash.com/photo-1523275335684-37898b6baf30?w=600&q=80',
-                      ),
-                      fit: BoxFit.cover,
-                    ),
-                  ),
-                  child: Align(
-                    alignment: Alignment.topRight,
-                    child: Padding(
-                      padding: const EdgeInsets.all(10),
-                      child: Container(
-                        padding: const EdgeInsets.all(6),
-                        decoration: const BoxDecoration(
-                          color: Colors.white,
-                          shape: BoxShape.circle,
-                        ),
-                        child: const Icon(
-                          Icons.favorite_rounded,
-                          size: 16,
-                          color: AppColors.cherryAccent,
-                        ),
-                      ),
-                    ),
-                  ),
-                ),
-                const SizedBox(height: 12),
-                Row(
-                  mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                  children: [
-                    Text(
-                      'BAUMANN WATCHES',
-                      style: theme.textTheme.labelSmall?.copyWith(
-                        fontSize: 10,
-                        fontWeight: FontWeight.bold,
-                        letterSpacing: 1.2,
-                        color: AppColors.cherryAccent,
-                      ),
-                    ),
-                    Container(
-                      padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 3),
-                      decoration: BoxDecoration(
-                        color: isDark ? AppColors.darkSurface : AppColors.blushPink,
-                        borderRadius: BorderRadius.circular(8),
-                      ),
-                      child: const Text(
-                        '⌚ Aksesuar',
-                        style: TextStyle(fontSize: 10, fontWeight: FontWeight.w600),
-                      ),
-                    ),
-                  ],
-                ),
-                const SizedBox(height: 4),
-                Text(
-                  'Vintage Chronograph',
-                  style: theme.textTheme.titleMedium?.copyWith(
-                    fontWeight: FontWeight.bold,
-                  ),
-                ),
-                const SizedBox(height: 4),
-                Text(
-                  '₺14.500',
-                  style: theme.textTheme.titleSmall?.copyWith(
-                    fontWeight: FontWeight.w800,
-                    color: isDark ? AppColors.darkTextPrimary : AppColors.deepPlum,
-                  ),
-                ),
-              ],
+            child: const Center(
+              child: Text('🎸', style: TextStyle(fontSize: 48)),
             ),
           ),
-          const SizedBox(height: 32),
+          const SizedBox(height: 36),
 
           Text(
-            'Kaydet. Düzenle. İlham Al.',
+            'Küçük veya büyük fark etmez.',
             textAlign: TextAlign.center,
             style: theme.textTheme.displayMedium?.copyWith(
-              fontSize: 24,
+              fontSize: 26,
               fontWeight: FontWeight.w800,
               letterSpacing: -0.5,
+              height: 1.2,
             ),
           ),
-          const SizedBox(height: 12),
+          const SizedBox(height: 14),
 
           Text(
-            'İster beğendiğin bir parça, ister hayal ettiğin bir seyahat detayı. Dileklerini moodboard ruhuyla koleksiyonlara ayır.',
+            'Bir gitar öğrenmek de bir dilektir. Japonya\'ya gitmek de.',
             textAlign: TextAlign.center,
             style: theme.textTheme.bodyMedium?.copyWith(
-              fontSize: 14,
+              fontSize: 15,
               height: 1.5,
               color: isDark ? AppColors.darkTextSecondary : AppColors.lightTextSecondary,
             ),
@@ -371,7 +286,7 @@ class _OnboardingScreenState extends ConsumerState<OnboardingScreen> {
           const SizedBox(height: 36),
 
           Text(
-            'Dilek listeni oluşturmaya başla.',
+            'Bir gün, gerçek olur. ✨',
             textAlign: TextAlign.center,
             style: theme.textTheme.displayMedium?.copyWith(
               fontSize: 26,
@@ -383,7 +298,7 @@ class _OnboardingScreenState extends ConsumerState<OnboardingScreen> {
           const SizedBox(height: 14),
 
           Text(
-            'Kendi kişisel dijital dilek defterine ilk parçanı eklemeye ve ilham verici listeler oluşturmaya hazırsın.',
+            'Dileklerini sakla, zamanı geldiğinde onlara geri dön.',
             textAlign: TextAlign.center,
             style: theme.textTheme.bodyMedium?.copyWith(
               fontSize: 15,

@@ -1,8 +1,10 @@
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import '../models/wish_status.dart';
+import '../models/wish_type.dart';
 import '../models/wishlist_item.dart';
 import 'wishlist_provider.dart';
 
-enum SortOption { dateNewest, dateOldest, priceLowToHigh, priceHighToLow, titleAsc }
+enum SortOption { dateNewest, dateOldest, priorityHighToLow, titleAsc }
 
 extension SortOptionExtension on SortOption {
   String get label {
@@ -11,17 +13,15 @@ extension SortOptionExtension on SortOption {
         return 'En Yeni';
       case SortOption.dateOldest:
         return 'En Eski';
-      case SortOption.priceLowToHigh:
-        return 'Fiyat: Düşükten Yükseğe';
-      case SortOption.priceHighToLow:
-        return 'Fiyat: Yüksekten Düşüğe';
+      case SortOption.priorityHighToLow:
+        return 'Öncelik: Yüksekten Düşüğe';
       case SortOption.titleAsc:
         return 'İsim (A-Z)';
     }
   }
 }
 
-/// Normalizes Turkish characters for friendly search matching (e.g. 'vis' matches 'Vişi' or 'Vişne')
+/// Normalizes Turkish characters for friendly search matching
 String normalizeTurkishText(String text) {
   var result = text.toLowerCase();
   result = result
@@ -42,6 +42,8 @@ String normalizeTurkishText(String text) {
 
 class FilterState {
   final String searchQuery;
+  final WishType? selectedType;
+  final WishStatus? selectedStatus;
   final String? selectedCollectionId;
   final ItemPriority? selectedPriority;
   final SortOption sortOption;
@@ -49,6 +51,8 @@ class FilterState {
 
   const FilterState({
     this.searchQuery = '',
+    this.selectedType,
+    this.selectedStatus,
     this.selectedCollectionId,
     this.selectedPriority,
     this.sortOption = SortOption.dateNewest,
@@ -57,6 +61,10 @@ class FilterState {
 
   FilterState copyWith({
     String? searchQuery,
+    WishType? selectedType,
+    bool clearType = false,
+    WishStatus? selectedStatus,
+    bool clearStatus = false,
     String? selectedCollectionId,
     bool clearCollection = false,
     ItemPriority? selectedPriority,
@@ -66,6 +74,8 @@ class FilterState {
   }) {
     return FilterState(
       searchQuery: searchQuery ?? this.searchQuery,
+      selectedType: clearType ? null : (selectedType ?? this.selectedType),
+      selectedStatus: clearStatus ? null : (selectedStatus ?? this.selectedStatus),
       selectedCollectionId: clearCollection ? null : (selectedCollectionId ?? this.selectedCollectionId),
       selectedPriority: clearPriority ? null : (selectedPriority ?? this.selectedPriority),
       sortOption: sortOption ?? this.sortOption,
@@ -80,6 +90,22 @@ class FilterNotifier extends Notifier<FilterState> {
 
   void setSearchQuery(String query) {
     state = state.copyWith(searchQuery: query);
+  }
+
+  void setTypeFilter(WishType? type) {
+    if (type == null) {
+      state = state.copyWith(clearType: true);
+    } else {
+      state = state.copyWith(selectedType: type);
+    }
+  }
+
+  void setStatusFilter(WishStatus? status) {
+    if (status == null) {
+      state = state.copyWith(clearStatus: true);
+    } else {
+      state = state.copyWith(selectedStatus: status);
+    }
   }
 
   void setCollectionFilter(String? collectionId) {
@@ -128,34 +154,48 @@ final filteredWishlistProvider = Provider<List<WishlistItem>>((ref) {
     result = result.where((item) {
       final rawTitle = item.title.toLowerCase();
       final normTitle = normalizeTurkishText(item.title);
+      final rawType = item.type.label.toLowerCase();
+      final normType = normalizeTurkishText(item.type.label);
       final rawStore = item.store?.toLowerCase() ?? '';
       final normStore = normalizeTurkishText(item.store ?? '');
       final rawNotes = item.notes?.toLowerCase() ?? '';
       final normNotes = normalizeTurkishText(item.notes ?? '');
 
       final titleMatch = rawTitle.contains(rawQuery) || normTitle.contains(normQuery);
+      final typeMatch = rawType.contains(rawQuery) || normType.contains(normQuery);
       final storeMatch = rawStore.contains(rawQuery) || normStore.contains(normQuery);
       final notesMatch = rawNotes.contains(rawQuery) || normNotes.contains(normQuery);
-      return titleMatch || storeMatch || notesMatch;
+
+      return titleMatch || typeMatch || storeMatch || notesMatch;
     }).toList();
   }
 
-  // 2. Collection Filter
+  // 2. Type Filter
+  if (filter.selectedType != null) {
+    result = result.where((item) => item.type == filter.selectedType).toList();
+  }
+
+  // 3. Status Filter
+  if (filter.selectedStatus != null) {
+    result = result.where((item) => item.status == filter.selectedStatus).toList();
+  }
+
+  // 4. Collection Filter
   if (filter.selectedCollectionId != null) {
     result = result.where((item) => item.collectionId == filter.selectedCollectionId).toList();
   }
 
-  // 3. Priority Filter
+  // 5. Priority Filter
   if (filter.selectedPriority != null) {
     result = result.where((item) => item.priority == filter.selectedPriority).toList();
   }
 
-  // 4. Favorites Filter
+  // 6. Favorites Filter
   if (filter.favoritesOnly) {
     result = result.where((item) => item.isFavorite).toList();
   }
 
-  // 5. Sorting
+  // 7. Sorting
   switch (filter.sortOption) {
     case SortOption.dateNewest:
       result.sort((a, b) => b.createdAt.compareTo(a.createdAt));
@@ -163,11 +203,8 @@ final filteredWishlistProvider = Provider<List<WishlistItem>>((ref) {
     case SortOption.dateOldest:
       result.sort((a, b) => a.createdAt.compareTo(b.createdAt));
       break;
-    case SortOption.priceLowToHigh:
-      result.sort((a, b) => a.price.compareTo(b.price));
-      break;
-    case SortOption.priceHighToLow:
-      result.sort((a, b) => b.price.compareTo(a.price));
+    case SortOption.priorityHighToLow:
+      result.sort((a, b) => b.priority.index.compareTo(a.priority.index));
       break;
     case SortOption.titleAsc:
       result.sort((a, b) => normalizeTurkishText(a.title).compareTo(normalizeTurkishText(b.title)));

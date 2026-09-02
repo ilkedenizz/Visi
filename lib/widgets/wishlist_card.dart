@@ -3,8 +3,8 @@ import 'package:flutter/services.dart';
 import 'package:intl/intl.dart';
 
 import '../core/theme/app_colors.dart';
+import '../models/wish_status.dart';
 import '../models/wishlist_item.dart';
-import 'visi_cherry_logo.dart';
 import 'visi_image.dart';
 
 class WishlistCard extends StatelessWidget {
@@ -28,14 +28,17 @@ class WishlistCard extends StatelessWidget {
   Widget build(BuildContext context) {
     final theme = Theme.of(context);
     final isDark = theme.brightness == Brightness.dark;
+    final isFulfilled = item.status == WishStatus.fulfilled;
 
     return Container(
       decoration: BoxDecoration(
         color: isDark ? AppColors.darkCard : AppColors.lightCard,
         borderRadius: BorderRadius.circular(20),
         border: Border.all(
-          color: isDark ? AppColors.darkCardBorder : AppColors.lightCardBorder,
-          width: 1,
+          color: isFulfilled
+              ? AppColors.cherryAccent.withValues(alpha: 0.5)
+              : (isDark ? AppColors.darkCardBorder : AppColors.lightCardBorder),
+          width: isFulfilled ? 1.5 : 1,
         ),
         boxShadow: [
           BoxShadow(
@@ -56,7 +59,7 @@ class WishlistCard extends StatelessWidget {
           child: Column(
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
-              // Product Image (Dominant area)
+              // Image Area
               Expanded(
                 child: Stack(
                   children: [
@@ -64,7 +67,7 @@ class WishlistCard extends StatelessWidget {
                       child: VisiImage(imageUrl: item.imagePath),
                     ),
 
-                    // Soft Gradient Vignette on bottom of image
+                    // Gradient Vignette
                     Positioned.fill(
                       child: Container(
                         decoration: BoxDecoration(
@@ -72,7 +75,7 @@ class WishlistCard extends StatelessWidget {
                             begin: Alignment.topCenter,
                             end: Alignment.bottomCenter,
                             colors: [
-                              Colors.black.withValues(alpha: 0.15),
+                              Colors.black.withValues(alpha: 0.2),
                               Colors.transparent,
                               Colors.black.withValues(alpha: 0.05),
                             ],
@@ -81,16 +84,37 @@ class WishlistCard extends StatelessWidget {
                       ),
                     ),
 
-                    // Favorite Heart Button (48x48 Minimum Touch Target)
+                    // Type Badge (Top Left)
+                    Positioned(
+                      top: 8,
+                      left: 8,
+                      child: Container(
+                        padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
+                        decoration: BoxDecoration(
+                          color: (isDark ? Colors.black87 : Colors.white).withValues(alpha: 0.88),
+                          borderRadius: BorderRadius.circular(10),
+                        ),
+                        child: Text(
+                          item.type.label,
+                          style: TextStyle(
+                            fontSize: 10,
+                            fontWeight: FontWeight.w700,
+                            color: isDark ? Colors.white : AppColors.lightTextPrimary,
+                          ),
+                        ),
+                      ),
+                    ),
+
+                    // Favorite Button (Top Right)
                     Positioned(
                       top: 4,
                       right: 4,
                       child: SizedBox(
-                        width: 48,
-                        height: 48,
+                        width: 44,
+                        height: 44,
                         child: Center(
                           child: Material(
-                            color: isDark ? Colors.black54 : Colors.white.withValues(alpha: 0.88),
+                            color: (isDark ? Colors.black54 : Colors.white).withValues(alpha: 0.88),
                             shape: const CircleBorder(),
                             elevation: 1,
                             child: InkWell(
@@ -125,31 +149,24 @@ class WishlistCard extends StatelessWidget {
                       ),
                     ),
 
-                    // Priority Accent Badge (If High Priority)
-                    if (item.priority == ItemPriority.high)
+                    // Fulfilled Overlay Badge
+                    if (isFulfilled)
                       Positioned(
-                        top: 10,
-                        left: 10,
+                        bottom: 8,
+                        left: 8,
                         child: Container(
-                          padding: const EdgeInsets.symmetric(horizontal: 7, vertical: 3),
+                          padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 3),
                           decoration: BoxDecoration(
                             color: AppColors.cherryAccent,
                             borderRadius: BorderRadius.circular(8),
                           ),
-                          child: const Row(
-                            mainAxisSize: MainAxisSize.min,
-                            children: [
-                              VisiCherryLogo(size: 9, color: Colors.white),
-                              SizedBox(width: 3),
-                              Text(
-                                'Favori',
-                                style: TextStyle(
-                                  fontSize: 9,
-                                  fontWeight: FontWeight.w700,
-                                  color: Colors.white,
-                                ),
-                              ),
-                            ],
+                          child: const Text(
+                            '✨ Gerçek oldu',
+                            style: TextStyle(
+                              fontSize: 9,
+                              fontWeight: FontWeight.w800,
+                              color: Colors.white,
+                            ),
                           ),
                         ),
                       ),
@@ -157,46 +174,44 @@ class WishlistCard extends StatelessWidget {
                 ),
               ),
 
-              // Product Info Area
+              // Info Area
               Padding(
                 padding: const EdgeInsets.all(12.0),
                 child: Column(
                   crossAxisAlignment: CrossAxisAlignment.start,
                   mainAxisSize: MainAxisSize.min,
                   children: [
-                    if (item.store != null && item.store!.isNotEmpty) ...[
-                      Text(
-                        item.store!.toUpperCase(),
-                        maxLines: 1,
-                        overflow: TextOverflow.ellipsis,
-                        style: TextStyle(
-                          fontSize: 9,
-                          fontWeight: FontWeight.w700,
-                          letterSpacing: 1.1,
-                          color: isDark ? AppColors.cherryAccentDark : AppColors.cherryAccent,
-                        ),
-                      ),
-                      const SizedBox(height: 2),
-                    ],
                     Text(
                       item.title,
                       maxLines: 2,
                       overflow: TextOverflow.ellipsis,
                       style: theme.textTheme.titleMedium?.copyWith(
                         fontSize: 13,
-                        fontWeight: FontWeight.w600,
+                        fontWeight: FontWeight.w700,
                         height: 1.25,
                       ),
                     ),
-                    const SizedBox(height: 6),
-                    Text(
-                      _formatPrice(item.price, item.currency),
-                      style: theme.textTheme.titleLarge?.copyWith(
-                        fontSize: 14,
-                        fontWeight: FontWeight.w800,
-                        color: theme.colorScheme.primary,
+                    if (item.price > 0) ...[
+                      const SizedBox(height: 6),
+                      Text(
+                        _formatPrice(item.price, item.currency),
+                        style: theme.textTheme.titleLarge?.copyWith(
+                          fontSize: 13,
+                          fontWeight: FontWeight.w800,
+                          color: theme.colorScheme.primary,
+                        ),
                       ),
-                    ),
+                    ] else if (item.targetDate != null) ...[
+                      const SizedBox(height: 4),
+                      Text(
+                        'Hedef: ${item.targetDate!.year}',
+                        style: TextStyle(
+                          fontSize: 11,
+                          fontWeight: FontWeight.w600,
+                          color: isDark ? AppColors.darkTextMuted : AppColors.lightTextMuted,
+                        ),
+                      ),
+                    ],
                   ],
                 ),
               ),

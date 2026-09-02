@@ -1,3 +1,4 @@
+import 'dart:io';
 import 'package:flutter/material.dart';
 import '../core/theme/app_colors.dart';
 import 'visi_cherry_logo.dart';
@@ -29,11 +30,13 @@ class VisiImage extends StatelessWidget {
 
     Widget child;
 
-    if (imageUrl == null || imageUrl!.trim().isEmpty) {
+    final path = imageUrl?.trim();
+
+    if (path == null || path.isEmpty) {
       child = _buildPlaceholder(isDark);
-    } else {
+    } else if (path.startsWith('http://') || path.startsWith('https://')) {
       child = Image.network(
-        imageUrl!,
+        path,
         fit: fit,
         width: width,
         height: height,
@@ -41,10 +44,21 @@ class VisiImage extends StatelessWidget {
           if (loadingProgress == null) return child;
           return _buildLoadingState(isDark, loadingProgress);
         },
-        errorBuilder: (context, error, stackTrace) {
-          return _buildPlaceholder(isDark);
-        },
+        errorBuilder: (context, error, stackTrace) => _buildPlaceholder(isDark),
       );
+    } else {
+      final file = File(path);
+      if (file.existsSync()) {
+        child = Image.file(
+          file,
+          fit: fit,
+          width: width,
+          height: height,
+          errorBuilder: (context, error, stackTrace) => _buildPlaceholder(isDark),
+        );
+      } else {
+        child = _buildPlaceholder(isDark);
+      }
     }
 
     if (borderRadius != null) {
