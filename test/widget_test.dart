@@ -94,6 +94,26 @@ void main() {
     });
   });
 
+  group('Vişi Share Intent URL Extraction Test', () {
+    test('UrlValidator.extractUrl extracts clean URL from arbitrary shared text', () {
+      final url1 = UrlValidator.extractUrl('https://www.zara.com/tr/tr/elbise-p0123.html');
+      expect(url1, equals('https://www.zara.com/tr/tr/elbise-p0123.html'));
+
+      final url2 = UrlValidator.extractUrl('Bunu çok beğendim: https://amazon.com.tr/dp/B08N5WRWNW incele!');
+      expect(url2, equals('https://amazon.com.tr/dp/B08N5WRWNW'));
+
+      final url3 = UrlValidator.extractUrl('zara.com/tr/tr/elbise-p0123.html sayfasını gördün mü?');
+      expect(url3, equals('https://zara.com/tr/tr/elbise-p0123.html'));
+    });
+
+    test('UrlValidator.extractUrl returns null for text without valid URLs', () {
+      expect(UrlValidator.extractUrl(null), null);
+      expect(UrlValidator.extractUrl('   '), null);
+      expect(UrlValidator.extractUrl('Sadece metin var burada hiç link yok'), null);
+      expect(UrlValidator.extractUrl('invalid_string'), null);
+    });
+  });
+
   group('Vişi StorageService & Persistence Test', () {
     test('StorageService initializes seed data on first launch', () async {
       SharedPreferences.setMockInitialValues({});
@@ -106,12 +126,12 @@ void main() {
       expect(collections.isNotEmpty, isTrue);
     });
 
-    test('StorageService persists Quick Add item with productUrl correctly', () async {
+    test('StorageService persists Quick Add / Shared item with productUrl correctly', () async {
       SharedPreferences.setMockInitialValues({});
       final storage = await StorageService.init();
 
       final newItem = WishlistItem(
-        id: 'quick_add_1',
+        id: 'shared_item_1',
         title: 'Yeni dilek',
         price: 0,
         currency: '₺',
@@ -126,7 +146,7 @@ void main() {
       final reloadedStorage = await StorageService.init();
       final reloadedItems = reloadedStorage.getWishlistItems();
 
-      final found = reloadedItems.firstWhere((i) => i.id == 'quick_add_1');
+      final found = reloadedItems.firstWhere((i) => i.id == 'shared_item_1');
       expect(found.title, equals('Yeni dilek'));
       expect(found.productUrl, equals('https://beymen.com/p_parfum_123'));
     });

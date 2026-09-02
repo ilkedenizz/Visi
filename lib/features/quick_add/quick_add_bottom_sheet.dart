@@ -32,6 +32,146 @@ class QuickAddBottomSheet extends ConsumerStatefulWidget {
     );
   }
 
+  /// Central processing pipeline for external/shared product URLs (e.g. Android Share Sheet)
+  static void processSharedUrl(BuildContext context, WidgetRef ref, String rawInput) {
+    final extractedUrl = UrlValidator.extractUrl(rawInput);
+    if (extractedUrl == null) {
+      HapticFeedback.warningNotification();
+      VisiFeedback.showError(context, 'Geçerli bir ürün linki bulunamadı.');
+      return;
+    }
+
+    final normalized = UrlValidator.normalizeForComparison(extractedUrl);
+    final wishlist = ref.read(wishlistProvider);
+    final existingIndex = wishlist.indexWhere((item) {
+      if (item.productUrl == null || item.productUrl!.isEmpty) return false;
+      return UrlValidator.normalizeForComparison(item.productUrl!) == normalized;
+    });
+
+    if (existingIndex != -1) {
+      HapticFeedback.warningNotification();
+      _showDuplicateModal(context, ref, wishlist[existingIndex], extractedUrl);
+    } else {
+      _createAndNavigateToEdit(context, ref, extractedUrl);
+    }
+  }
+
+  /// Show duplicate URL prompt dialog with Vişi aesthetic
+  static void _showDuplicateModal(
+    BuildContext context,
+    WidgetRef ref,
+    WishlistItem duplicateItem,
+    String formattedUrl,
+  ) {
+    final theme = Theme.of(context);
+    final isDark = theme.brightness == Brightness.dark;
+
+    showModalBottomSheet(
+      context: context,
+      backgroundColor: isDark ? AppColors.darkCard : AppColors.lightCard,
+      shape: const RoundedRectangleBorder(
+        borderRadius: BorderRadius.vertical(top: Radius.circular(28)),
+      ),
+      builder: (ctx) {
+        return Padding(
+          padding: const EdgeInsets.all(24.0),
+          child: Column(
+            mainAxisSize: MainAxisSize.min,
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              Row(
+                children: [
+                  const Icon(Icons.warning_amber_rounded, color: AppColors.cherryAccent, size: 24),
+                  const SizedBox(width: 8),
+                  Text(
+                    'Bu dilek zaten listende.',
+                    style: theme.textTheme.titleLarge?.copyWith(
+                      fontSize: 18,
+                      fontWeight: FontWeight.w800,
+                    ),
+                  ),
+                ],
+              ),
+              const SizedBox(height: 10),
+              Text(
+                '"${duplicateItem.title}" dileğin aynı internet adresiyle daha önce kaydedilmiş.',
+                style: theme.textTheme.bodyMedium?.copyWith(
+                  fontSize: 13,
+                  color: isDark ? AppColors.darkTextSecondary : AppColors.lightTextSecondary,
+                ),
+              ),
+              const SizedBox(height: 24),
+              SizedBox(
+                width: double.infinity,
+                child: ElevatedButton.icon(
+                  icon: const Icon(Icons.open_in_new_rounded, size: 18),
+                  label: const Text('Mevcut dileği aç', style: TextStyle(fontWeight: FontWeight.w800)),
+                  style: ElevatedButton.styleFrom(
+                    backgroundColor: AppColors.cherryAccent,
+                    foregroundColor: Colors.white,
+                    padding: const EdgeInsets.symmetric(vertical: 15),
+                    shape: RoundedRectangleBorder(
+                      borderRadius: BorderRadius.circular(16),
+                    ),
+                  ),
+                  onPressed: () {
+                    HapticFeedback.selectionClick();
+                    Navigator.pop(ctx);
+                    context.push('/item/${duplicateItem.id}');
+                  },
+                ),
+              ),
+              const SizedBox(height: 12),
+              SizedBox(
+                width: double.infinity,
+                child: OutlinedButton(
+                  style: OutlinedButton.styleFrom(
+                    padding: const EdgeInsets.symmetric(vertical: 15),
+                    side: BorderSide(
+                      color: isDark ? AppColors.darkCardBorder : AppColors.lightCardBorder,
+                    ),
+                    shape: RoundedRectangleBorder(
+                      borderRadius: BorderRadius.circular(16),
+                    ),
+                  ),
+                  onPressed: () {
+                    HapticFeedback.selectionClick();
+                    Navigator.pop(ctx);
+                    _createAndNavigateToEdit(context, ref, formattedUrl);
+                  },
+                  child: const Text('Yine de ekle', style: TextStyle(fontWeight: FontWeight.w700)),
+                ),
+              ),
+            ],
+          ),
+        );
+      },
+    );
+  }
+
+  /// Create temporary item and open edit screen
+  static void _createAndNavigateToEdit(BuildContext context, WidgetRef ref, String url) {
+    final prefs = ref.read(preferencesProvider);
+    final collections = ref.read(collectionProvider);
+    final defaultCollectionId = prefs.lastSelectedCollectionId ??
+        (collections.isNotEmpty ? collections.first.id : '');
+
+    final newItem = WishlistItem(
+      id: const Uuid().v4(),
+      title: 'Yeni dilek',
+      price: 0,
+      currency: prefs.defaultCurrency,
+      productUrl: url,
+      collectionId: defaultCollectionId,
+      priority: ItemPriority.medium,
+      createdAt: DateTime.now(),
+    );
+
+    ref.read(wishlistProvider.notifier).addItem(newItem);
+    VisiFeedback.showSuccess(context, 'Listeye eklendi 🍒');
+    context.push('/edit-item', extra: newItem);
+  }
+
   @override
   ConsumerState<QuickAddBottomSheet> createState() => _QuickAddBottomSheetState();
 }
@@ -114,27 +254,8 @@ class _QuickAddBottomSheetState extends ConsumerState<QuickAddBottomSheet> {
       }
     }
 
-    // Capture temporary item & proceed to edit screen
-    final prefs = ref.read(preferencesProvider);
-    final collections = ref.read(collectionProvider);
-    final defaultCollectionId = prefs.lastSelectedCollectionId ??
-        (collections.isNotEmpty ? collections.first.id : '');
-
-    final newItem = WishlistItem(
-      id: const Uuid().v4(),
-      title: 'Yeni dilek',
-      price: 0,
-      currency: prefs.defaultCurrency,
-      productUrl: formattedUrl,
-      collectionId: defaultCollectionId,
-      priority: ItemPriority.medium,
-      createdAt: DateTime.now(),
-    );
-
-    ref.read(wishlistProvider.notifier).addItem(newItem);
     Navigator.pop(context);
-    VisiFeedback.showSuccess(context, 'Listeye eklendi 🍒');
-    context.push('/edit-item', extra: newItem);
+    QuickAddBottomSheet._createAndNavigateToEdit(context, ref, formattedUrl);
   }
 
   @override

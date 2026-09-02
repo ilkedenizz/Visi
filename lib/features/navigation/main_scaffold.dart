@@ -1,9 +1,13 @@
+import 'dart:async';
 import 'package:flutter/material.dart';
+import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
+
 import '../../core/theme/app_colors.dart';
+import '../../providers/url_capture_provider.dart';
 import '../quick_add/quick_add_bottom_sheet.dart';
 
-class MainScaffold extends StatelessWidget {
+class MainScaffold extends ConsumerStatefulWidget {
   final StatefulNavigationShell navigationShell;
 
   const MainScaffold({
@@ -11,10 +15,48 @@ class MainScaffold extends StatelessWidget {
     required this.navigationShell,
   });
 
-  void _onTap(BuildContext context, int index) {
-    navigationShell.goBranch(
+  @override
+  ConsumerState<MainScaffold> createState() => _MainScaffoldState();
+}
+
+class _MainScaffoldState extends ConsumerState<MainScaffold> {
+  StreamSubscription<String>? _shareSubscription;
+
+  @override
+  void initState() {
+    super.initState();
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      _initShareCapture();
+    });
+  }
+
+  Future<void> _initShareCapture() async {
+    final captureService = ref.read(urlCaptureServiceProvider);
+
+    // 1. Cold Start Check
+    final initialUrl = await captureService.getInitialSharedUrl();
+    if (initialUrl != null && initialUrl.isNotEmpty && mounted) {
+      QuickAddBottomSheet.processSharedUrl(context, ref, initialUrl);
+    }
+
+    // 2. Warm Start Stream Listener
+    _shareSubscription = captureService.sharedUrlStream.listen((sharedUrl) {
+      if (sharedUrl.isNotEmpty && mounted) {
+        QuickAddBottomSheet.processSharedUrl(context, ref, sharedUrl);
+      }
+    });
+  }
+
+  @override
+  void dispose() {
+    _shareSubscription?.cancel();
+    super.dispose();
+  }
+
+  void _onTap(int index) {
+    widget.navigationShell.goBranch(
       index,
-      initialLocation: index == navigationShell.currentIndex,
+      initialLocation: index == widget.navigationShell.currentIndex,
     );
   }
 
@@ -24,7 +66,7 @@ class MainScaffold extends StatelessWidget {
     final isDark = theme.brightness == Brightness.dark;
 
     return Scaffold(
-      body: navigationShell,
+      body: widget.navigationShell,
       bottomNavigationBar: Container(
         decoration: BoxDecoration(
           color: isDark ? AppColors.darkBackground : AppColors.lightBackground,
@@ -39,8 +81,8 @@ class MainScaffold extends StatelessWidget {
           child: Padding(
             padding: const EdgeInsets.symmetric(vertical: 4),
             child: BottomNavigationBar(
-              currentIndex: navigationShell.currentIndex,
-              onTap: (index) => _onTap(context, index),
+              currentIndex: widget.navigationShell.currentIndex,
+              onTap: _onTap,
               type: BottomNavigationBarType.fixed,
               backgroundColor: Colors.transparent,
               elevation: 0,

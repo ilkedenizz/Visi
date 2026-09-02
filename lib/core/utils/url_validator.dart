@@ -25,9 +25,45 @@ class UrlValidationResult {
   }
 }
 
-/// Helper for Quick Add URL Validation & Normalization
+/// Helper for Quick Add & Share Intent URL Extraction, Validation & Normalization
 class UrlValidator {
   UrlValidator._();
+
+  /// Extracts a valid product URL from arbitrary text (e.g. Android Share Sheet EXTRA_TEXT)
+  static String? extractUrl(String? text) {
+    if (text == null || text.trim().isEmpty) return null;
+
+    final trimmed = text.trim();
+
+    // 1. Direct validation check if input has no spaces (raw URL)
+    if (!trimmed.contains(' ') && !trimmed.contains('\n') && !trimmed.contains('\r')) {
+      final directCheck = validate(trimmed);
+      if (directCheck.isValid) {
+        return directCheck.formattedUrl;
+      }
+    }
+
+    // 2. Regex search for HTTP/HTTPS URLs or domain-like URL paths inside shared text
+    final urlRegExp = RegExp(
+      r'(https?:\/\/[^\s]+|[a-zA-Z0-9-]+\.[a-zA-Z]{2,}(?:\/[^\s]*)?)',
+      caseSensitive: false,
+    );
+
+    final matches = urlRegExp.allMatches(trimmed);
+    for (final match in matches) {
+      final candidate = match.group(0);
+      if (candidate != null) {
+        // Strip common trailing punctuation in shared text (like . , ! ? ) ] " ')
+        var cleaned = candidate.replaceAll(RegExp(r'[\.,!?)"\]]+$'), '');
+        final validation = validate(cleaned);
+        if (validation.isValid) {
+          return validation.formattedUrl;
+        }
+      }
+    }
+
+    return null;
+  }
 
   /// Validates and normalizes a product URL string
   static UrlValidationResult validate(String? input) {
