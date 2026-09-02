@@ -83,6 +83,7 @@ class HomeScreen extends ConsumerWidget {
                           ],
                         ),
                       ),
+                      const SizedBox(width: 12),
                       InkWell(
                         onTap: () => context.go('/profile'),
                         borderRadius: BorderRadius.circular(24),
@@ -234,7 +235,7 @@ class HomeScreen extends ConsumerWidget {
                               child: CollectionCard(
                                 collection: col,
                                 itemCount: count,
-                                onTap: () => context.push('/collection/${col.id}'),
+                                onTap: () => context.push('/collections/${col.id}'),
                               ),
                             ),
                           );

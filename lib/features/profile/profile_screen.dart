@@ -5,8 +5,10 @@ import 'package:go_router/go_router.dart';
 
 import '../../core/constants/app_constants.dart';
 import '../../core/theme/app_colors.dart';
-import '../../models/user_preferences.dart';
+import '../../models/wish_status.dart';
+import '../../providers/collection_provider.dart';
 import '../../providers/preferences_provider.dart';
+import '../../providers/wishlist_provider.dart';
 import '../../widgets/section_header.dart';
 import '../../widgets/visi_cherry_logo.dart';
 
@@ -18,6 +20,12 @@ class ProfileScreen extends ConsumerWidget {
     final theme = Theme.of(context);
     final isDark = theme.brightness == Brightness.dark;
     final prefs = ref.watch(preferencesProvider);
+    final wishes = ref.watch(wishlistProvider);
+    final collections = ref.watch(collectionProvider);
+
+    final totalWishes = wishes.length;
+    final fulfilledWishes = wishes.where((w) => w.status == WishStatus.fulfilled).length;
+    final totalCollections = collections.length;
 
     return Scaffold(
       body: SafeArea(
@@ -30,7 +38,7 @@ class ProfileScreen extends ConsumerWidget {
               Center(
                 child: Column(
                   children: [
-                    const SizedBox(height: 16),
+                    const SizedBox(height: 12),
                     Container(
                       width: 80,
                       height: 80,
@@ -66,70 +74,36 @@ class ProfileScreen extends ConsumerWidget {
                         color: isDark ? AppColors.darkTextSecondary : AppColors.lightTextSecondary,
                       ),
                     ),
-                    const SizedBox(height: 28),
+                    const SizedBox(height: 24),
                   ],
                 ),
               ),
 
-              // Görünüm (Appearance) Section
-              const SectionHeader(title: 'Görünüm'),
-              const SizedBox(height: 8),
-              Material(
-                color: isDark ? AppColors.darkCard : AppColors.lightCard,
-                borderRadius: BorderRadius.circular(20),
-                clipBehavior: Clip.antiAlias,
-                child: Container(
-                  decoration: BoxDecoration(
-                    borderRadius: BorderRadius.circular(20),
-                    border: Border.all(
-                      color: isDark ? AppColors.darkCardBorder : AppColors.lightCardBorder,
-                    ),
-                  ),
-                  child: Column(
-                    children: [
-                      ListTile(
-                        leading: const Icon(Icons.wb_sunny_outlined, size: 20),
-                        title: const Text('Aydınlık Tema'),
-                        trailing: prefs.themeMode == ThemeMode.light
-                            ? const Icon(Icons.check_circle_rounded, color: AppColors.cherryAccent)
-                            : null,
-                        onTap: () {
-                          HapticFeedback.selectionClick();
-                          ref.read(preferencesProvider.notifier).updateThemeMode(ThemeMode.light);
-                        },
-                      ),
-                      const Divider(height: 1, indent: 16, endIndent: 16),
-                      ListTile(
-                        leading: const Icon(Icons.nightlight_round, size: 20),
-                        title: const Text('Karanlık Tema (Vişi Plum)'),
-                        trailing: prefs.themeMode == ThemeMode.dark
-                            ? const Icon(Icons.check_circle_rounded, color: AppColors.cherryAccent)
-                            : null,
-                        onTap: () {
-                          HapticFeedback.selectionClick();
-                          ref.read(preferencesProvider.notifier).updateThemeMode(ThemeMode.dark);
-                        },
-                      ),
-                      const Divider(height: 1, indent: 16, endIndent: 16),
-                      ListTile(
-                        leading: const Icon(Icons.brightness_auto_rounded, size: 20),
-                        title: const Text('Sistem Teması'),
-                        trailing: prefs.themeMode == ThemeMode.system
-                            ? const Icon(Icons.check_circle_rounded, color: AppColors.cherryAccent)
-                            : null,
-                        onTap: () {
-                          HapticFeedback.selectionClick();
-                          ref.read(preferencesProvider.notifier).updateThemeMode(ThemeMode.system);
-                        },
-                      ),
-                    ],
+              // Wish Journal Summary Stats Card
+              Container(
+                padding: const EdgeInsets.symmetric(vertical: 18, horizontal: 20),
+                decoration: BoxDecoration(
+                  color: isDark ? AppColors.darkCard : AppColors.lightCard,
+                  borderRadius: BorderRadius.circular(20),
+                  border: Border.all(
+                    color: isDark ? AppColors.darkCardBorder : AppColors.lightCardBorder,
                   ),
                 ),
+                child: Row(
+                  mainAxisAlignment: MainAxisAlignment.spaceAround,
+                  children: [
+                    _buildStatColumn(context, '$totalWishes', 'Toplum Dilek'),
+                    Container(height: 36, width: 1, color: isDark ? AppColors.darkCardBorder : AppColors.lightCardBorder),
+                    _buildStatColumn(context, '$fulfilledWishes', 'Gerçek Oldu ✨'),
+                    Container(height: 36, width: 1, color: isDark ? AppColors.darkCardBorder : AppColors.lightCardBorder),
+                    _buildStatColumn(context, '$totalCollections', 'Koleksiyon'),
+                  ],
+                ),
               ),
-              const SizedBox(height: 24),
+              const SizedBox(height: 28),
 
-              // Tercihler (Preferences) Section
-              const SectionHeader(title: 'Tercihler'),
+              // Ayarlar (Settings) Section
+              const SectionHeader(title: 'Hesap & Tercihler'),
               const SizedBox(height: 8),
               Material(
                 color: isDark ? AppColors.darkCard : AppColors.lightCard,
@@ -145,47 +119,13 @@ class ProfileScreen extends ConsumerWidget {
                   child: Column(
                     children: [
                       ListTile(
-                        title: const Text('Varsayılan Para Birimi'),
-                        subtitle: Text(prefs.defaultCurrency),
-                        trailing: DropdownButton<String>(
-                          value: prefs.defaultCurrency,
-                          underline: const SizedBox(),
-                          items: ['₺', '\$', '€', '£', '¥'].map((c) {
-                            return DropdownMenuItem(value: c, child: Text(c));
-                          }).toList(),
-                          onChanged: (val) {
-                            if (val != null) {
-                              HapticFeedback.selectionClick();
-                              ref.read(preferencesProvider.notifier).updateDefaultCurrency(val);
-                            }
-                          },
-                        ),
-                      ),
-                      const Divider(height: 1, indent: 16, endIndent: 16),
-                      ListTile(
-                        title: const Text('Varsayılan Görünüm'),
-                        subtitle: Text(prefs.defaultViewMode == ViewMode.grid ? 'Grid (Izgara)' : 'Liste'),
-                        trailing: SegmentedButton<ViewMode>(
-                          segments: const [
-                            ButtonSegment(value: ViewMode.grid, icon: Icon(Icons.grid_view_rounded, size: 16)),
-                            ButtonSegment(value: ViewMode.list, icon: Icon(Icons.format_list_bulleted_rounded, size: 16)),
-                          ],
-                          selected: {prefs.defaultViewMode},
-                          onSelectionChanged: (selected) {
-                            HapticFeedback.selectionClick();
-                            ref.read(preferencesProvider.notifier).updateDefaultViewMode(selected.first);
-                          },
-                        ),
-                      ),
-                      const Divider(height: 1, indent: 16, endIndent: 16),
-                      SwitchListTile(
-                        title: const Text('Bildirimler'),
-                        subtitle: const Text('Hatırlatıcılar ve fiyat güncellemeleri'),
-                        value: prefs.notificationsEnabled,
-                        activeTrackColor: AppColors.cherryAccent,
-                        onChanged: (enabled) {
+                        leading: const Icon(Icons.settings_outlined, color: AppColors.cherryAccent),
+                        title: const Text('Uygulama Ayarları'),
+                        subtitle: Text('Tema: ${_getThemeLabel(prefs.themeMode)} • Para Birimi: ${prefs.defaultCurrency}'),
+                        trailing: const Icon(Icons.chevron_right_rounded),
+                        onTap: () {
                           HapticFeedback.selectionClick();
-                          ref.read(preferencesProvider.notifier).toggleNotifications(enabled);
+                          context.push('/settings');
                         },
                       ),
                     ],
@@ -256,5 +196,42 @@ class ProfileScreen extends ConsumerWidget {
         ),
       ),
     );
+  }
+
+  Widget _buildStatColumn(BuildContext context, String value, String label) {
+    final theme = Theme.of(context);
+    final isDark = theme.brightness == Brightness.dark;
+
+    return Column(
+      children: [
+        Text(
+          value,
+          style: theme.textTheme.titleLarge?.copyWith(
+            fontSize: 20,
+            fontWeight: FontWeight.w800,
+            color: AppColors.cherryAccent,
+          ),
+        ),
+        const SizedBox(height: 2),
+        Text(
+          label,
+          style: theme.textTheme.bodySmall?.copyWith(
+            fontSize: 11,
+            color: isDark ? AppColors.darkTextSecondary : AppColors.lightTextSecondary,
+          ),
+        ),
+      ],
+    );
+  }
+
+  String _getThemeLabel(ThemeMode mode) {
+    switch (mode) {
+      case ThemeMode.light:
+        return 'Aydınlık';
+      case ThemeMode.dark:
+        return 'Karanlık';
+      case ThemeMode.system:
+        return 'Sistem';
+    }
   }
 }

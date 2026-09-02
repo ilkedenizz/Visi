@@ -1,3 +1,4 @@
+import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 
@@ -7,18 +8,35 @@ import '../../features/home/home_screen.dart';
 import '../../features/navigation/main_scaffold.dart';
 import '../../features/onboarding/onboarding_screen.dart';
 import '../../features/profile/profile_screen.dart';
+import '../../features/settings/settings_screen.dart';
 import '../../features/wishlist/add_edit_wishlist_item_screen.dart';
 import '../../features/wishlist/wishlist_item_detail_screen.dart';
 import '../../features/wishlist/wishlist_screen.dart';
+import '../../models/user_preferences.dart';
 import '../../models/wishlist_item.dart';
 import '../../providers/preferences_provider.dart';
 
+class _RouterRefreshNotifier extends ChangeNotifier {
+  _RouterRefreshNotifier(Ref ref) {
+    ref.listen<UserPreferences>(
+      preferencesProvider,
+      (previous, next) {
+        if (previous?.hasCompletedOnboarding != next.hasCompletedOnboarding) {
+          notifyListeners();
+        }
+      },
+    );
+  }
+}
+
 final appRouterProvider = Provider<GoRouter>((ref) {
-  final prefs = ref.watch(preferencesProvider);
+  final refreshNotifier = _RouterRefreshNotifier(ref);
 
   return GoRouter(
     initialLocation: '/',
+    refreshListenable: refreshNotifier,
     redirect: (context, state) {
+      final prefs = ref.read(preferencesProvider);
       final isOnboarding = state.matchedLocation == '/onboarding';
       if (!prefs.hasCompletedOnboarding && !isOnboarding) {
         return '/onboarding';
@@ -78,6 +96,10 @@ final appRouterProvider = Provider<GoRouter>((ref) {
       ),
 
       // Standalone Fullscreen Routes
+      GoRoute(
+        path: '/settings',
+        builder: (context, state) => const SettingsScreen(),
+      ),
       GoRoute(
         path: '/add-item',
         builder: (context, state) => const AddEditWishlistItemScreen(),
