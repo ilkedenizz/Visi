@@ -46,6 +46,58 @@ class VisiFeedback {
     );
   }
 
+  static void showSuccessWithUndo({
+    required BuildContext context,
+    required String message,
+    required String undoLabel,
+    required VoidCallback onUndo,
+  }) {
+    HapticFeedback.mediumImpact();
+    final isDark = Theme.of(context).brightness == Brightness.dark;
+
+    ScaffoldMessenger.of(context).hideCurrentSnackBar();
+    ScaffoldMessenger.of(context).showSnackBar(
+      SnackBar(
+        content: Row(
+          children: [
+            const VisiCherryLogo(size: 18, color: AppColors.cherryAccent),
+            const SizedBox(width: 12),
+            Expanded(
+              child: Text(
+                message,
+                style: TextStyle(
+                  fontSize: 14,
+                  fontWeight: FontWeight.w600,
+                  color: isDark ? Colors.white : AppColors.deepPlum,
+                ),
+              ),
+            ),
+          ],
+        ),
+        action: SnackBarAction(
+          label: undoLabel,
+          textColor: AppColors.cherryAccent,
+          onPressed: () {
+            HapticFeedback.mediumImpact();
+            onUndo();
+          },
+        ),
+        backgroundColor: isDark ? AppColors.darkCard : AppColors.blushPink,
+        behavior: SnackBarBehavior.floating,
+        elevation: 4,
+        shape: RoundedRectangleBorder(
+          borderRadius: BorderRadius.circular(16),
+          side: BorderSide(
+            color: AppColors.cherryAccent.withValues(alpha: 0.3),
+            width: 1,
+          ),
+        ),
+        margin: const EdgeInsets.symmetric(horizontal: 20, vertical: 16),
+        duration: const Duration(milliseconds: 3800),
+      ),
+    );
+  }
+
   static void showError(BuildContext context, String message) {
     HapticFeedback.warningNotification();
     final isDark = Theme.of(context).brightness == Brightness.dark;

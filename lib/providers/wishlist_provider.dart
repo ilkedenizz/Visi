@@ -3,6 +3,11 @@ import '../models/wishlist_item.dart';
 import 'storage_provider.dart';
 
 class WishlistNotifier extends Notifier<List<WishlistItem>> {
+  WishlistItem? _lastDeletedItem;
+  int? _lastDeletedIndex;
+
+  WishlistItem? get lastDeletedItem => _lastDeletedItem;
+
   @override
   List<WishlistItem> build() {
     final storageService = ref.watch(storageServiceProvider);
@@ -22,9 +27,34 @@ class WishlistNotifier extends Notifier<List<WishlistItem>> {
     await ref.read(storageServiceProvider).saveWishlistItems(state);
   }
 
-  Future<void> deleteItem(String id) async {
-    state = state.where((item) => item.id != id).toList();
-    await ref.read(storageServiceProvider).saveWishlistItems(state);
+  Future<WishlistItem?> deleteItem(String id) async {
+    final index = state.indexWhere((item) => item.id == id);
+    if (index != -1) {
+      _lastDeletedItem = state[index];
+      _lastDeletedIndex = index;
+      final updated = List<WishlistItem>.from(state);
+      updated.removeAt(index);
+      state = updated;
+      await ref.read(storageServiceProvider).saveWishlistItems(state);
+      return _lastDeletedItem;
+    }
+    return null;
+  }
+
+  Future<bool> undoDelete() async {
+    if (_lastDeletedItem != null) {
+      final itemToRestore = _lastDeletedItem!;
+      final index = _lastDeletedIndex ?? 0;
+      final updated = List<WishlistItem>.from(state);
+      final insertIndex = index <= updated.length ? index : updated.length;
+      updated.insert(insertIndex, itemToRestore);
+      state = updated;
+      _lastDeletedItem = null;
+      _lastDeletedIndex = null;
+      await ref.read(storageServiceProvider).saveWishlistItems(state);
+      return true;
+    }
+    return false;
   }
 
   Future<void> toggleFavorite(String id) async {

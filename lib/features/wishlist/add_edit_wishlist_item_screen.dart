@@ -200,13 +200,10 @@ class _AddEditWishlistItemScreenState extends ConsumerState<AddEditWishlistItemS
                             keyboardType: TextInputType.number,
                             style: theme.textTheme.bodyLarge?.copyWith(fontSize: 16, fontWeight: FontWeight.w700),
                             decoration: const InputDecoration(
-                              hintText: '0.00',
+                              hintText: '0.00 (Opsiyonel)',
                             ),
                             validator: (val) {
-                              if (val == null || val.trim().isEmpty) {
-                                return 'Fiyat girin';
-                              }
-                              if (double.tryParse(val.trim()) == null) {
+                              if (val != null && val.trim().isNotEmpty && double.tryParse(val.trim()) == null) {
                                 return 'Geçerli fiyat girin';
                               }
                               return null;

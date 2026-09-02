@@ -81,37 +81,43 @@ class WishlistCard extends StatelessWidget {
                       ),
                     ),
 
-                    // Favorite Heart Button (Subtle & Elegant)
+                    // Favorite Heart Button (48x48 Minimum Touch Target)
                     Positioned(
-                      top: 8,
-                      right: 8,
-                      child: Material(
-                        color: isDark ? Colors.black54 : Colors.white.withValues(alpha: 0.88),
-                        shape: const CircleBorder(),
-                        elevation: 1,
-                        child: InkWell(
-                          customBorder: const CircleBorder(),
-                          onTap: () {
-                            HapticFeedback.lightImpact();
-                            onFavoriteToggle();
-                          },
-                          child: Padding(
-                            padding: const EdgeInsets.all(6.0),
-                            child: AnimatedSwitcher(
-                              duration: const Duration(milliseconds: 240),
-                              transitionBuilder: (child, anim) => ScaleTransition(
-                                scale: Tween<double>(begin: 0.7, end: 1.0).animate(
-                                  CurvedAnimation(parent: anim, curve: Curves.easeOutBack),
+                      top: 4,
+                      right: 4,
+                      child: SizedBox(
+                        width: 48,
+                        height: 48,
+                        child: Center(
+                          child: Material(
+                            color: isDark ? Colors.black54 : Colors.white.withValues(alpha: 0.88),
+                            shape: const CircleBorder(),
+                            elevation: 1,
+                            child: InkWell(
+                              customBorder: const CircleBorder(),
+                              onTap: () {
+                                HapticFeedback.lightImpact();
+                                onFavoriteToggle();
+                              },
+                              child: Padding(
+                                padding: const EdgeInsets.all(7.0),
+                                child: AnimatedSwitcher(
+                                  duration: const Duration(milliseconds: 240),
+                                  transitionBuilder: (child, anim) => ScaleTransition(
+                                    scale: Tween<double>(begin: 0.7, end: 1.0).animate(
+                                      CurvedAnimation(parent: anim, curve: Curves.easeOutBack),
+                                    ),
+                                    child: child,
+                                  ),
+                                  child: Icon(
+                                    item.isFavorite ? Icons.favorite_rounded : Icons.favorite_border_rounded,
+                                    key: ValueKey(item.isFavorite),
+                                    size: 16,
+                                    color: item.isFavorite
+                                        ? AppColors.cherryAccent
+                                        : (isDark ? Colors.white70 : AppColors.lightTextSecondary),
+                                  ),
                                 ),
-                                child: child,
-                              ),
-                              child: Icon(
-                                item.isFavorite ? Icons.favorite_rounded : Icons.favorite_border_rounded,
-                                key: ValueKey(item.isFavorite),
-                                size: 16,
-                                color: item.isFavorite
-                                    ? AppColors.cherryAccent
-                                    : (isDark ? Colors.white70 : AppColors.lightTextSecondary),
                               ),
                             ),
                           ),
@@ -122,8 +128,8 @@ class WishlistCard extends StatelessWidget {
                     // Priority Accent Badge (If High Priority)
                     if (item.priority == ItemPriority.high)
                       Positioned(
-                        top: 8,
-                        left: 8,
+                        top: 10,
+                        left: 10,
                         child: Container(
                           padding: const EdgeInsets.symmetric(horizontal: 7, vertical: 3),
                           decoration: BoxDecoration(

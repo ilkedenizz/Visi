@@ -66,11 +66,22 @@ class WishlistItemDetailScreen extends ConsumerWidget {
             child: const Text('Vazgeç'),
           ),
           TextButton(
-            onPressed: () {
+            onPressed: () async {
               Navigator.pop(dialogContext);
-              ref.read(wishlistProvider.notifier).deleteItem(item.id);
-              context.pop();
-              VisiFeedback.showInfo(context, 'Dilek silindi');
+              final deleted = await ref.read(wishlistProvider.notifier).deleteItem(item.id);
+              if (context.mounted) {
+                context.pop();
+                if (deleted != null) {
+                  VisiFeedback.showSuccessWithUndo(
+                    context: context,
+                    message: 'Dilek silindi 🍒',
+                    undoLabel: 'Geri Al',
+                    onUndo: () {
+                      ref.read(wishlistProvider.notifier).undoDelete();
+                    },
+                  );
+                }
+              }
             },
             child: const Text(
               'Sil',

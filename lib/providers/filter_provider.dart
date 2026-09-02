@@ -21,6 +21,25 @@ extension SortOptionExtension on SortOption {
   }
 }
 
+/// Normalizes Turkish characters for friendly search matching (e.g. 'vis' matches 'Vişi' or 'Vişne')
+String normalizeTurkishText(String text) {
+  var result = text.toLowerCase();
+  result = result
+      .replaceAll('ı', 'i')
+      .replaceAll('İ', 'i')
+      .replaceAll('ğ', 'g')
+      .replaceAll('Ğ', 'g')
+      .replaceAll('ü', 'u')
+      .replaceAll('Ü', 'u')
+      .replaceAll('ş', 's')
+      .replaceAll('Ş', 's')
+      .replaceAll('ö', 'o')
+      .replaceAll('Ö', 'o')
+      .replaceAll('ç', 'c')
+      .replaceAll('Ç', 'c');
+  return result;
+}
+
 class FilterState {
   final String searchQuery;
   final String? selectedCollectionId;
@@ -101,13 +120,22 @@ final filteredWishlistProvider = Provider<List<WishlistItem>>((ref) {
 
   var result = [...allItems];
 
-  // 1. Search Query Filter
+  // 1. Search Query Filter with Turkish Normalization
   if (filter.searchQuery.trim().isNotEmpty) {
-    final query = filter.searchQuery.trim().toLowerCase();
+    final rawQuery = filter.searchQuery.trim().toLowerCase();
+    final normQuery = normalizeTurkishText(filter.searchQuery.trim());
+
     result = result.where((item) {
-      final titleMatch = item.title.toLowerCase().contains(query);
-      final storeMatch = item.store?.toLowerCase().contains(query) ?? false;
-      final notesMatch = item.notes?.toLowerCase().contains(query) ?? false;
+      final rawTitle = item.title.toLowerCase();
+      final normTitle = normalizeTurkishText(item.title);
+      final rawStore = item.store?.toLowerCase() ?? '';
+      final normStore = normalizeTurkishText(item.store ?? '');
+      final rawNotes = item.notes?.toLowerCase() ?? '';
+      final normNotes = normalizeTurkishText(item.notes ?? '');
+
+      final titleMatch = rawTitle.contains(rawQuery) || normTitle.contains(normQuery);
+      final storeMatch = rawStore.contains(rawQuery) || normStore.contains(normQuery);
+      final notesMatch = rawNotes.contains(rawQuery) || normNotes.contains(normQuery);
       return titleMatch || storeMatch || notesMatch;
     }).toList();
   }
@@ -142,7 +170,7 @@ final filteredWishlistProvider = Provider<List<WishlistItem>>((ref) {
       result.sort((a, b) => b.price.compareTo(a.price));
       break;
     case SortOption.titleAsc:
-      result.sort((a, b) => a.title.toLowerCase().compareTo(b.title.toLowerCase()));
+      result.sort((a, b) => normalizeTurkishText(a.title).compareTo(normalizeTurkishText(b.title)));
       break;
   }
 

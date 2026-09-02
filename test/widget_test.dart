@@ -4,6 +4,7 @@ import 'package:shared_preferences/shared_preferences.dart';
 import 'package:visi/core/utils/url_validator.dart';
 import 'package:visi/models/collection_model.dart';
 import 'package:visi/models/wishlist_item.dart';
+import 'package:visi/providers/filter_provider.dart';
 import 'package:visi/services/storage_service.dart';
 import 'package:visi/widgets/visi_cherry_logo.dart';
 
@@ -56,6 +57,15 @@ void main() {
       expect(restored.id, equals('col_1'));
       expect(restored.name, equals('Fashion'));
       expect(restored.emoji, equals('👗'));
+    });
+  });
+
+  group('Vişi Turkish Search & Normalization Test', () {
+    test('normalizeTurkishText handles Turkish characters correctly', () {
+      expect(normalizeTurkishText('Vişne'), equals('visne'));
+      expect(normalizeTurkishText('İSTANBUL'), equals('istanbul'));
+      expect(normalizeTurkishText('Çiçek & Şapka'), equals('cicek & sapka'));
+      expect(normalizeTurkishText('Özel Saatler'), equals('ozel saatler'));
     });
   });
 

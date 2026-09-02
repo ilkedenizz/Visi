@@ -20,7 +20,7 @@ class EmptyStateWidget extends StatelessWidget {
 
   factory EmptyStateWidget.wishlist({VoidCallback? onAddPressed}) {
     return EmptyStateWidget(
-      title: 'Henüz bir şey yok.',
+      title: 'Henüz bir dileğin yok.',
       message: 'Sevdiğin, hayal ettiğin parçaları kaydetmeye başla.',
       buttonText: 'İlk Dileğini Ekle',
       onButtonPressed: onAddPressed,
@@ -47,6 +47,16 @@ class EmptyStateWidget extends StatelessWidget {
     return const EmptyStateWidget(
       title: 'Aradığın dilek bulunamadı.',
       message: 'Farklı bir arama terimi veya filtre seçeneği deneyebilirsin.',
+    );
+  }
+
+  factory EmptyStateWidget.error({String? message, VoidCallback? onRetry}) {
+    return EmptyStateWidget(
+      title: 'Bir şeyler ters gitti.',
+      message: message ?? 'Listen yüklenirken küçük bir aksaklık oldu. Lütfen tekrar dene.',
+      buttonText: 'Tekrar Dene',
+      onButtonPressed: onRetry,
+      customIcon: const Icon(Icons.refresh_rounded, size: 40, color: AppColors.cherryAccent),
     );
   }
 
