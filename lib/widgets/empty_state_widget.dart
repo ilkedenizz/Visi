@@ -36,17 +36,21 @@ class EmptyStateWidget extends StatelessWidget {
     );
   }
 
-  factory EmptyStateWidget.favorites() {
-    return const EmptyStateWidget(
+  factory EmptyStateWidget.favorites({VoidCallback? onExplorePressed}) {
+    return EmptyStateWidget(
       title: 'Bazı dilekler küçük bir kalbi hak eder.',
       message: 'En çok heyecan duyduğun parçaların üzerindeki kalbe dokunarak favorilerine ekle.',
+      buttonText: 'Tüm Dilekleri Gör',
+      onButtonPressed: onExplorePressed,
     );
   }
 
-  factory EmptyStateWidget.search() {
-    return const EmptyStateWidget(
+  factory EmptyStateWidget.search({VoidCallback? onClearPressed}) {
+    return EmptyStateWidget(
       title: 'Aradığın dilek bulunamadı.',
       message: 'Farklı bir arama terimi veya filtre seçeneği deneyebilirsin.',
+      buttonText: 'Aramayı Temizle',
+      onButtonPressed: onClearPressed,
     );
   }
 

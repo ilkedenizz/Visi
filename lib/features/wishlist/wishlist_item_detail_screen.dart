@@ -167,6 +167,24 @@ class WishlistItemDetailScreen extends ConsumerWidget {
                   ),
                 ),
               ),
+              // Share Button
+              Padding(
+                padding: const EdgeInsets.all(8.0),
+                child: CircleAvatar(
+                  backgroundColor: isDark ? Colors.black54 : Colors.white70,
+                  child: IconButton(
+                    icon: Icon(Icons.share_outlined, color: isDark ? Colors.white : AppColors.lightTextPrimary),
+                    onPressed: () async {
+                      HapticFeedback.lightImpact();
+                      final shareText = '${item.title}${item.price > 0 ? " (${item.currency}${item.price})" : ""}${item.productUrl != null && item.productUrl!.isNotEmpty ? "\n${item.productUrl}" : ""}';
+                      await Clipboard.setData(ClipboardData(text: shareText.trim()));
+                      if (context.mounted) {
+                        VisiFeedback.showSuccess(context, 'Dilek kopyalandı 🍒');
+                      }
+                    },
+                  ),
+                ),
+              ),
               // Options Popup Menu (Edit / Delete)
               Padding(
                 padding: const EdgeInsets.only(right: 8.0, top: 8, bottom: 8),

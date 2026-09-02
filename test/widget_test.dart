@@ -3,6 +3,7 @@ import 'package:flutter_test/flutter_test.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 import 'package:visi/core/utils/url_validator.dart';
 import 'package:visi/models/collection_model.dart';
+import 'package:visi/models/user_preferences.dart';
 import 'package:visi/models/wishlist_item.dart';
 import 'package:visi/providers/filter_provider.dart';
 import 'package:visi/services/storage_service.dart';
@@ -159,6 +160,16 @@ void main() {
       final found = reloadedItems.firstWhere((i) => i.id == 'shared_item_1');
       expect(found.title, equals('Yeni dilek'));
       expect(found.productUrl, equals('https://beymen.com/p_parfum_123'));
+    });
+  });
+
+  group('Vişi Default Theme & Preferences Test', () {
+    test('UserPreferences defaults strictly to ThemeMode.light on fresh launch', () {
+      const prefs = UserPreferences();
+      expect(prefs.themeMode, equals(ThemeMode.light));
+
+      final restored = UserPreferences.fromMap({});
+      expect(restored.themeMode, equals(ThemeMode.light));
     });
   });
 

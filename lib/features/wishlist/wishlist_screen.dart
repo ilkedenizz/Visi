@@ -177,9 +177,17 @@ class WishlistScreen extends ConsumerWidget {
             Expanded(
               child: filteredItems.isEmpty
                   ? (filterState.favoritesOnly
-                      ? EmptyStateWidget.favorites()
+                      ? EmptyStateWidget.favorites(
+                          onExplorePressed: () {
+                            ref.read(filterProvider.notifier).resetFilters();
+                          },
+                        )
                       : filterState.searchQuery.isNotEmpty
-                          ? EmptyStateWidget.search()
+                          ? EmptyStateWidget.search(
+                              onClearPressed: () {
+                                ref.read(filterProvider.notifier).setSearchQuery('');
+                              },
+                            )
                           : EmptyStateWidget.wishlist(
                               onAddPressed: () => context.push('/add-item'),
                             ))

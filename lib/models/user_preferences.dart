@@ -12,7 +12,7 @@ class UserPreferences {
   final String? lastSelectedCollectionId;
 
   const UserPreferences({
-    this.themeMode = ThemeMode.system,
+    this.themeMode = ThemeMode.light,
     this.defaultCurrency = '₺',
     this.defaultViewMode = ViewMode.grid,
     this.notificationsEnabled = true,
@@ -59,7 +59,7 @@ class UserPreferences {
         mode = ThemeMode.dark;
         break;
       default:
-        mode = ThemeMode.system;
+        mode = ThemeMode.light;
     }
 
     ViewMode view;
