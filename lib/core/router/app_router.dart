@@ -25,7 +25,8 @@ class _RouterRefreshNotifier extends ChangeNotifier {
         final nextVal = next.asData?.value.hasCompletedOnboarding;
         if (prevVal != nextVal ||
             previous?.isLoading != next.isLoading ||
-            previous?.hasError != next.hasError) {
+            previous?.hasError != next.hasError ||
+            (previous?.asData == null && next.asData != null)) {
           notifyListeners();
         }
       },
@@ -41,11 +42,15 @@ final appRouterProvider = Provider<GoRouter>((ref) {
     refreshListenable: refreshNotifier,
     redirect: (context, state) {
       final prefsAsync = ref.read(preferencesProvider);
-      if (prefsAsync.isLoading || !prefsAsync.hasValue) {
+
+      // Rule: AsyncLoading or AsyncError -> NO redirect, keep current route.
+      if (prefsAsync.isLoading || prefsAsync.hasError || prefsAsync.asData == null) {
         return null;
       }
-      final prefs = prefsAsync.value!;
+
+      final prefs = prefsAsync.asData!.value;
       final isOnboarding = state.matchedLocation == '/onboarding';
+
       if (!prefs.hasCompletedOnboarding && !isOnboarding) {
         return '/onboarding';
       }

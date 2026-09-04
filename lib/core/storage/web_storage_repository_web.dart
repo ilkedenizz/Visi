@@ -36,36 +36,49 @@ class WebStorageRepository implements StorageRepository {
   Future<void> _doInit() async {
     final idbFactory = html.window.indexedDB;
     if (idbFactory != null) {
-      _db = await idbFactory.open(_dbName, version: _dbVersion,
-          onUpgradeNeeded: (e) {
-        final db = e.target.result;
-        if (!db.objectStoreNames!.contains(_wishlistStore)) {
-          db.createObjectStore(_wishlistStore, keyPath: 'id');
-        }
-        if (!db.objectStoreNames!.contains(_collectionsStore)) {
-          db.createObjectStore(_collectionsStore, keyPath: 'id');
-        }
-        if (!db.objectStoreNames!.contains(_imagesStore)) {
-          db.createObjectStore(_imagesStore, keyPath: 'id');
-        }
-        if (!db.objectStoreNames!.contains(_priceAlertsStore)) {
-          db.createObjectStore(_priceAlertsStore, keyPath: 'id');
-        }
-      });
+      try {
+        _db = await idbFactory.open(_dbName, version: _dbVersion,
+            onUpgradeNeeded: (e) {
+          final db = e.target.result;
+          if (!db.objectStoreNames!.contains(_wishlistStore)) {
+            db.createObjectStore(_wishlistStore, keyPath: 'id');
+          }
+          if (!db.objectStoreNames!.contains(_collectionsStore)) {
+            db.createObjectStore(_collectionsStore, keyPath: 'id');
+          }
+          if (!db.objectStoreNames!.contains(_imagesStore)) {
+            db.createObjectStore(_imagesStore, keyPath: 'id');
+          }
+          if (!db.objectStoreNames!.contains(_priceAlertsStore)) {
+            db.createObjectStore(_priceAlertsStore, keyPath: 'id');
+          }
+        });
+      } catch (_) {
+        _db = null;
+      }
     }
-    _prefs = await SharedPreferences.getInstance();
+
+    try {
+      _prefs = await SharedPreferences.getInstance();
+    } catch (_) {
+      _prefs = null;
+    }
   }
 
-  Future<SharedPreferences> _getPrefs() async {
-    if (_prefs != null) return _prefs!;
-    await init();
-    return _prefs!;
+  Future<SharedPreferences?> _getPrefs() async {
+    if (_prefs != null) return _prefs;
+    try {
+      await init();
+    } catch (_) {}
+    return _prefs;
   }
 
   Future<dynamic> _getDb() async {
-    if (_db != null) return _db!;
-    await init();
-    return _db!;
+    if (_db != null) return _db;
+    try {
+      await init();
+    } catch (_) {}
+    return _db;
   }
 
   // ---------- Wishlist ----------
@@ -129,9 +142,24 @@ class WebStorageRepository implements StorageRepository {
   // ---------- Preferences ----------
   @override
   Future<UserPreferences> loadPreferences() async {
-    final prefs = await _getPrefs();
-    final raw = prefs.getString(AppConstants.storageKeyPreferences) ??
-        prefs.getString('visi_preferences_v1');
+    String? raw;
+    try {
+      final prefs = await _getPrefs();
+      if (prefs != null) {
+        raw = prefs.getString(AppConstants.storageKeyPreferences) ??
+            prefs.getString('visi_preferences_v1');
+      }
+    } catch (_) {}
+
+    if (raw == null) {
+      try {
+        raw = html.window.localStorage[AppConstants.storageKeyPreferences] ??
+            html.window.localStorage['visi_preferences_v1'] ??
+            html.window.localStorage['flutter.${AppConstants.storageKeyPreferences}'] ??
+            html.window.localStorage['flutter.visi_preferences_v1'];
+      } catch (_) {}
+    }
+
     if (raw == null) return const UserPreferences();
     try {
       return UserPreferences.fromJson(raw);
@@ -142,10 +170,21 @@ class WebStorageRepository implements StorageRepository {
 
   @override
   Future<void> savePreferences(UserPreferences preferences) async {
-    final prefs = await _getPrefs();
     final jsonStr = preferences.toJson();
-    await prefs.setString(AppConstants.storageKeyPreferences, jsonStr);
-    await prefs.setString('visi_preferences_v1', jsonStr);
+    try {
+      final prefs = await _getPrefs();
+      if (prefs != null) {
+        await prefs.setString(AppConstants.storageKeyPreferences, jsonStr);
+        await prefs.setString('visi_preferences_v1', jsonStr);
+      }
+    } catch (_) {}
+
+    try {
+      html.window.localStorage[AppConstants.storageKeyPreferences] = jsonStr;
+      html.window.localStorage['visi_preferences_v1'] = jsonStr;
+      html.window.localStorage['flutter.${AppConstants.storageKeyPreferences}'] = jsonStr;
+      html.window.localStorage['flutter.visi_preferences_v1'] = jsonStr;
+    } catch (_) {}
   }
 
   // ---------- Price Alerts ----------
@@ -235,6 +274,8 @@ class WebStorageRepository implements StorageRepository {
       }
     }
     final prefs = await _getPrefs();
-    await prefs.clear();
+    if (prefs != null) {
+      await prefs.clear();
+    }
   }
 }
