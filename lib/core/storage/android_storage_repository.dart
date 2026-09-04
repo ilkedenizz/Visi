@@ -7,49 +7,76 @@ import '../../services/storage_service.dart';
 
 /// Android implementation that wraps the existing `StorageService`.
 class AndroidStorageRepository implements StorageRepository {
-  late final StorageService _service;
+  StorageService? _service;
+  Future<StorageService>? _initFuture;
 
   @override
   Future<void> init() async {
-    _service = await StorageService.init();
+    await _getService();
+  }
+
+  Future<StorageService> _getService() async {
+    if (_service != null) return _service!;
+    _initFuture ??= StorageService.init();
+    _service = await _initFuture;
+    return _service!;
   }
 
   // ---------- Wishlist ----------
   @override
-  Future<List<WishlistItem>> loadWishlistItems() async => _service.getWishlistItems();
+  Future<List<WishlistItem>> loadWishlistItems() async {
+    final service = await _getService();
+    return service.getWishlistItems();
+  }
 
   @override
   Future<void> saveWishlistItems(List<WishlistItem> items) async {
-    await _service.saveWishlistItems(items);
+    final service = await _getService();
+    await service.saveWishlistItems(items);
   }
 
   // ---------- Collections ----------
   @override
-  Future<List<CollectionModel>> loadCollections() async => _service.getCollections();
+  Future<List<CollectionModel>> loadCollections() async {
+    final service = await _getService();
+    return service.getCollections();
+  }
 
   @override
   Future<void> saveCollections(List<CollectionModel> collections) async {
-    await _service.saveCollections(collections);
+    final service = await _getService();
+    await service.saveCollections(collections);
   }
 
   // ---------- Preferences ----------
   @override
-  Future<UserPreferences> loadPreferences() async => _service.getPreferences();
+  Future<UserPreferences> loadPreferences() async {
+    final service = await _getService();
+    return service.getPreferences();
+  }
 
   @override
   Future<void> savePreferences(UserPreferences preferences) async {
-    await _service.savePreferences(preferences);
+    final service = await _getService();
+    await service.savePreferences(preferences);
   }
 
   // ---------- Price Alerts ----------
   @override
-  Future<List<PriceAlert>> loadPriceAlerts() async => _service.getPriceAlerts();
-
-  @override
-  Future<void> savePriceAlerts(List<PriceAlert> alerts) async {
-    await _service.savePriceAlerts(alerts);
+  Future<List<PriceAlert>> loadPriceAlerts() async {
+    final service = await _getService();
+    return service.getPriceAlerts();
   }
 
   @override
-  Future<void> clearAll() async => await _service.clearAllData();
+  Future<void> savePriceAlerts(List<PriceAlert> alerts) async {
+    final service = await _getService();
+    await service.savePriceAlerts(alerts);
+  }
+
+  @override
+  Future<void> clearAll() async {
+    final service = await _getService();
+    await service.clearAllData();
+  }
 }

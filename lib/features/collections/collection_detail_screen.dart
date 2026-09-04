@@ -70,6 +70,10 @@ class CollectionDetailScreen extends ConsumerWidget {
 
     final collectionItems = allItems.where((item) => item.collectionId == collection.id).toList();
 
+    final width = MediaQuery.of(context).size.width;
+    final crossAxisCount = width >= 900 ? 4 : (width >= 600 ? 3 : 2);
+    final childAspectRatio = width >= 600 ? 0.85 : 0.68;
+
     return Scaffold(
       appBar: AppBar(
         title: Row(
@@ -77,7 +81,12 @@ class CollectionDetailScreen extends ConsumerWidget {
           children: [
             Text(collection.emoji),
             const SizedBox(width: 8),
-            Text(collection.name),
+            Flexible(
+              child: Text(
+                collection.name,
+                overflow: TextOverflow.ellipsis,
+              ),
+            ),
           ],
         ),
         actions: [
@@ -94,11 +103,11 @@ class CollectionDetailScreen extends ConsumerWidget {
               )
             : GridView.builder(
                 padding: const EdgeInsets.all(20),
-                gridDelegate: const SliverGridDelegateWithFixedCrossAxisCount(
-                  crossAxisCount: 2,
+                gridDelegate: SliverGridDelegateWithFixedCrossAxisCount(
+                  crossAxisCount: crossAxisCount,
                   crossAxisSpacing: 14,
                   mainAxisSpacing: 14,
-                  childAspectRatio: 0.68,
+                  childAspectRatio: childAspectRatio,
                 ),
                 itemCount: collectionItems.length,
                 itemBuilder: (context, index) {

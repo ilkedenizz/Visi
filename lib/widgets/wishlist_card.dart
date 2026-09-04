@@ -88,6 +88,7 @@ class WishlistCard extends StatelessWidget {
                     Positioned(
                       top: 8,
                       left: 8,
+                      right: 52,
                       child: Container(
                         padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
                         decoration: BoxDecoration(
@@ -96,6 +97,8 @@ class WishlistCard extends StatelessWidget {
                         ),
                         child: Text(
                           item.type.label,
+                          maxLines: 1,
+                          overflow: TextOverflow.ellipsis,
                           style: TextStyle(
                             fontSize: 10,
                             fontWeight: FontWeight.w700,

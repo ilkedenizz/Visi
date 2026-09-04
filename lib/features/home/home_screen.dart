@@ -181,7 +181,7 @@ class HomeScreen extends ConsumerWidget {
                 // Recent Wishes Horizontal List Section
                 SliverToBoxAdapter(
                   child: Padding(
-                    padding: const EdgeInsets.only(top: 16.0),
+                    padding: const EdgeInsets.fromLTRB(20, 16, 20, 0),
                     child: SectionHeader(
                       title: 'Son Eklenenler',
                       subtitle: 'Listenizdeki en yeni dilekler',
@@ -195,7 +195,7 @@ class HomeScreen extends ConsumerWidget {
                     height: 220,
                     child: ListView.builder(
                       scrollDirection: Axis.horizontal,
-                      padding: const EdgeInsets.symmetric(horizontal: 16),
+                      padding: const EdgeInsets.symmetric(horizontal: 20),
                       itemCount: recentItems.length,
                       itemBuilder: (context, index) {
                         final item = recentItems[index];
@@ -209,7 +209,7 @@ class HomeScreen extends ConsumerWidget {
                 if (collections.isNotEmpty) ...[
                   SliverToBoxAdapter(
                     child: Padding(
-                      padding: const EdgeInsets.only(top: 24.0),
+                      padding: const EdgeInsets.fromLTRB(20, 24, 20, 0),
                       child: SectionHeader(
                         title: 'Koleksiyonlar',
                         subtitle: 'Moodboard ve kategorilerin',
@@ -223,7 +223,7 @@ class HomeScreen extends ConsumerWidget {
                       height: 140,
                       child: ListView.builder(
                         scrollDirection: Axis.horizontal,
-                        padding: const EdgeInsets.symmetric(horizontal: 16),
+                        padding: const EdgeInsets.symmetric(horizontal: 20),
                         itemCount: collections.length,
                         itemBuilder: (context, index) {
                           final col = collections[index];
@@ -281,6 +281,7 @@ class HomeScreen extends ConsumerWidget {
                     Positioned(
                       top: 6,
                       left: 6,
+                      right: 6,
                       child: Container(
                         padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 3),
                         decoration: BoxDecoration(
@@ -289,6 +290,8 @@ class HomeScreen extends ConsumerWidget {
                         ),
                         child: Text(
                           item.type.label,
+                          maxLines: 1,
+                          overflow: TextOverflow.ellipsis,
                           style: const TextStyle(fontSize: 9, fontWeight: FontWeight.w700),
                         ),
                       ),
@@ -310,7 +313,7 @@ class HomeScreen extends ConsumerWidget {
                     const SizedBox(height: 4),
                     if (item.price > 0)
                       Text(
-                        '₺${item.price.toStringAsFixed(0)}',
+                        '${item.currency}${item.price % 1 == 0 ? item.price.toInt() : item.price.toStringAsFixed(2)}',
                         style: const TextStyle(fontSize: 11, fontWeight: FontWeight.w800, color: AppColors.cherryAccent),
                       )
                     else

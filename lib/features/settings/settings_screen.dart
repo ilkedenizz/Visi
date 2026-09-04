@@ -129,16 +129,18 @@ class SettingsScreen extends ConsumerWidget {
                       ListTile(
                         title: const Text('Varsayılan Görünüm'),
                         subtitle: Text(prefs.defaultViewMode == ViewMode.grid ? 'Grid (Izgara)' : 'Liste'),
-                        trailing: SegmentedButton<ViewMode>(
-                          segments: const [
-                            ButtonSegment(value: ViewMode.grid, icon: Icon(Icons.grid_view_rounded, size: 16)),
-                            ButtonSegment(value: ViewMode.list, icon: Icon(Icons.format_list_bulleted_rounded, size: 16)),
-                          ],
-                          selected: {prefs.defaultViewMode},
-                          onSelectionChanged: (selected) {
-                            HapticFeedback.selectionClick();
-                            ref.read(preferencesProvider.notifier).updateDefaultViewMode(selected.first);
-                          },
+                        trailing: FittedBox(
+                          child: SegmentedButton<ViewMode>(
+                            segments: const [
+                              ButtonSegment(value: ViewMode.grid, icon: Icon(Icons.grid_view_rounded, size: 16)),
+                              ButtonSegment(value: ViewMode.list, icon: Icon(Icons.format_list_bulleted_rounded, size: 16)),
+                            ],
+                            selected: {prefs.defaultViewMode},
+                            onSelectionChanged: (selected) {
+                              HapticFeedback.selectionClick();
+                              ref.read(preferencesProvider.notifier).updateDefaultViewMode(selected.first);
+                            },
+                          ),
                         ),
                       ),
                       const Divider(height: 1, indent: 16, endIndent: 16),

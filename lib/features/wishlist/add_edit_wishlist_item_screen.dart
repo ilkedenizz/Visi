@@ -58,13 +58,13 @@ class _AddEditWishlistItemScreenState extends ConsumerState<AddEditWishlistItemS
     final item = widget.initialItem;
 
     _titleController = TextEditingController(text: item?.title ?? '');
-    _priceController = TextEditingController(text: item != null && item.price > 0 ? item.price.toStringAsFixed(0) : '');
+    _priceController = TextEditingController(text: item != null && item.price > 0 ? (item.price % 1 == 0 ? item.price.toInt().toString() : item.price.toString()) : '');
     _storeController = TextEditingController(text: item?.store ?? '');
     _imagePathController = TextEditingController(text: item?.imagePath ?? '');
     _productUrlController = TextEditingController(text: item?.productUrl ?? '');
     _notesController = TextEditingController(text: item?.notes ?? '');
 
-    _type = item?.type ?? WishType.toDo;
+    _type = item?.type ?? WishType.toOwn;
     _status = item?.status ?? WishStatus.wishing;
     _targetDate = item?.targetDate;
 
@@ -265,7 +265,7 @@ class _AddEditWishlistItemScreenState extends ConsumerState<AddEditWishlistItemS
     final id = isEdit ? widget.initialItem!.id : const Uuid().v4();
     final createdAt = isEdit ? widget.initialItem!.createdAt : DateTime.now();
 
-    final double priceValue = double.tryParse(_priceController.text.trim()) ?? 0.0;
+    final double priceValue = double.tryParse(_priceController.text.trim().replaceAll(',', '.')) ?? 0.0;
 
     String? finalImageReference = isEdit ? (kIsWeb ? widget.initialItem?.imageId : widget.initialItem?.imagePath) : null;
 
@@ -488,18 +488,23 @@ class _AddEditWishlistItemScreenState extends ConsumerState<AddEditWishlistItemS
                           Text('KOLEKSİYON', style: theme.textTheme.labelSmall),
                           const SizedBox(height: 8),
                           DropdownButtonFormField<String>(
+                            isExpanded: true,
                             initialValue: collections.any((c) => c.id == _collectionId)
                                 ? _collectionId
                                 : (collections.isNotEmpty ? collections.first.id : null),
-                            decoration: const InputDecoration(),
+                            decoration: const InputDecoration(
+                              isDense: true,
+                              contentPadding: EdgeInsets.symmetric(horizontal: 10, vertical: 12),
+                            ),
                             items: collections.map((col) {
                               return DropdownMenuItem(
                                 value: col.id,
                                 child: Row(
+                                  mainAxisSize: MainAxisSize.min,
                                   children: [
                                     Text(col.emoji),
                                     const SizedBox(width: 6),
-                                    Expanded(
+                                    Flexible(
                                       child: Text(
                                         col.name,
                                         overflow: TextOverflow.ellipsis,
@@ -549,7 +554,10 @@ class _AddEditWishlistItemScreenState extends ConsumerState<AddEditWishlistItemS
                             shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(14)),
                           ),
                           onPressed: () => setState(() => _priority = p),
-                          child: Text(p.label, style: const TextStyle(fontSize: 13, fontWeight: FontWeight.w600)),
+                          child: FittedBox(
+                            fit: BoxFit.scaleDown,
+                            child: Text(p.label, style: const TextStyle(fontSize: 13, fontWeight: FontWeight.w600)),
+                          ),
                         ),
                       ),
                     );
@@ -593,8 +601,12 @@ class _AddEditWishlistItemScreenState extends ConsumerState<AddEditWishlistItemS
                             Text('PARA BİRİMİ', style: theme.textTheme.labelSmall),
                             const SizedBox(height: 8),
                             DropdownButtonFormField<String>(
+                              isExpanded: true,
                               initialValue: _currency,
-                              decoration: const InputDecoration(),
+                              decoration: const InputDecoration(
+                                isDense: true,
+                                contentPadding: EdgeInsets.symmetric(horizontal: 10, vertical: 12),
+                              ),
                               items: ['₺', '\$', '€', '£', '¥'].map((curr) {
                                 return DropdownMenuItem(value: curr, child: Text(curr));
                               }).toList(),
@@ -659,6 +671,7 @@ class _AddEditWishlistItemScreenState extends ConsumerState<AddEditWishlistItemS
                     ),
                   ),
                 ),
+                const SizedBox(height: 40),
               ],
             ),
           ),

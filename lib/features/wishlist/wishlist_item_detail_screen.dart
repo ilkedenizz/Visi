@@ -7,12 +7,15 @@ import 'package:url_launcher/url_launcher.dart';
 
 import '../../core/theme/app_colors.dart';
 import '../../models/collection_model.dart';
+import '../../models/price_alert.dart';
 import '../../models/wish_status.dart';
 import '../../models/wish_type.dart';
 import '../../models/wishlist_item.dart';
 import '../../providers/collection_provider.dart';
 import '../../providers/price_alert_provider.dart';
 import '../../providers/wishlist_provider.dart';
+import '../../services/price_alert_service.dart';
+import '../../services/price_checker_service.dart';
 import '../../widgets/visi_cherry_logo.dart';
 import '../../widgets/visi_feedback.dart';
 import '../../widgets/visi_image.dart';
@@ -35,18 +38,20 @@ class WishlistItemDetailScreen extends ConsumerWidget {
   }
 
   Future<void> _openProductUrl(BuildContext context, String? url) async {
-    if (url == null || url.isEmpty) return;
+    if (url == null || url.trim().isEmpty) return;
 
-    final uri = Uri.parse(url.startsWith('http') ? url : 'https://$url');
+    final raw = url.trim();
+    final uri = Uri.parse(raw.startsWith('http://') || raw.startsWith('https://') ? raw : 'https://$raw');
     try {
-      if (await canLaunchUrl(uri)) {
-        await launchUrl(uri, mode: LaunchMode.externalApplication);
-      } else {
-        if (context.mounted) {
-          VisiFeedback.showInfo(context, 'Bağlantı açılamadı');
-        }
+      final launched = await launchUrl(uri, mode: LaunchMode.externalApplication);
+      if (!launched && context.mounted) {
+        VisiFeedback.showInfo(context, 'Bağlantı açılamadı');
       }
-    } catch (_) {}
+    } catch (_) {
+      if (context.mounted) {
+        VisiFeedback.showInfo(context, 'Bağlantı açılamadı');
+      }
+    }
   }
 
   void _confirmDelete(BuildContext context, WidgetRef ref, WishlistItem item) {
@@ -199,9 +204,17 @@ class WishlistItemDetailScreen extends ConsumerWidget {
                     icon: Icon(Icons.more_vert_rounded, color: isDark ? Colors.white : AppColors.lightTextPrimary),
                     onSelected: (value) {
                       if (value == 'edit') {
-                        context.push('/edit-item', extra: item);
+                        WidgetsBinding.instance.addPostFrameCallback((_) {
+                          if (context.mounted) {
+                            context.push('/edit-item', extra: item);
+                          }
+                        });
                       } else if (value == 'delete') {
-                        _confirmDelete(context, ref, item);
+                        WidgetsBinding.instance.addPostFrameCallback((_) {
+                          if (context.mounted) {
+                            _confirmDelete(context, ref, item);
+                          }
+                        });
                       }
                     },
                     itemBuilder: (context) => [
@@ -303,26 +316,31 @@ class WishlistItemDetailScreen extends ConsumerWidget {
                       ),
                       const SizedBox(width: 8),
                       if (collection != null)
-                        Container(
-                          padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
-                          decoration: BoxDecoration(
-                            color: isDark ? AppColors.darkCard : AppColors.blushPink,
-                            borderRadius: BorderRadius.circular(14),
-                          ),
-                          child: Row(
-                            mainAxisSize: MainAxisSize.min,
-                            children: [
-                              Text(collection.emoji, style: const TextStyle(fontSize: 12)),
-                              const SizedBox(width: 4),
-                              Text(
-                                collection.name,
-                                style: TextStyle(
-                                  fontSize: 12,
-                                  fontWeight: FontWeight.w600,
-                                  color: isDark ? AppColors.darkTextPrimary : AppColors.lightTextPrimary,
+                        Flexible(
+                          child: Container(
+                            padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
+                            decoration: BoxDecoration(
+                              color: isDark ? AppColors.darkCard : AppColors.blushPink,
+                              borderRadius: BorderRadius.circular(14),
+                            ),
+                            child: Row(
+                              mainAxisSize: MainAxisSize.min,
+                              children: [
+                                Text(collection.emoji, style: const TextStyle(fontSize: 12)),
+                                const SizedBox(width: 4),
+                                Flexible(
+                                  child: Text(
+                                    collection.name,
+                                    overflow: TextOverflow.ellipsis,
+                                    style: TextStyle(
+                                      fontSize: 12,
+                                      fontWeight: FontWeight.w600,
+                                      color: isDark ? AppColors.darkTextPrimary : AppColors.lightTextPrimary,
+                                    ),
+                                  ),
                                 ),
-                              ),
-                            ],
+                              ],
+                            ),
                           ),
                         ),
                     ],
@@ -360,7 +378,7 @@ class WishlistItemDetailScreen extends ConsumerWidget {
                             borderRadius: BorderRadius.circular(14),
                             child: AnimatedContainer(
                               duration: const Duration(milliseconds: 200),
-                              padding: const EdgeInsets.symmetric(vertical: 10),
+                              padding: const EdgeInsets.symmetric(vertical: 10, horizontal: 4),
                               decoration: BoxDecoration(
                                 color: isSelected
                                     ? AppColors.cherryAccent
@@ -372,15 +390,18 @@ class WishlistItemDetailScreen extends ConsumerWidget {
                                       : (isDark ? AppColors.darkCardBorder : AppColors.lightCardBorder),
                                 ),
                               ),
-                              child: Text(
-                                st.label,
-                                textAlign: TextAlign.center,
-                                style: TextStyle(
-                                  fontSize: 12,
-                                  fontWeight: isSelected ? FontWeight.w700 : FontWeight.w500,
-                                  color: isSelected
-                                      ? Colors.white
-                                      : (isDark ? AppColors.darkTextSecondary : AppColors.lightTextSecondary),
+                              child: FittedBox(
+                                fit: BoxFit.scaleDown,
+                                child: Text(
+                                  st.label,
+                                  textAlign: TextAlign.center,
+                                  style: TextStyle(
+                                    fontSize: 12,
+                                    fontWeight: isSelected ? FontWeight.w700 : FontWeight.w500,
+                                    color: isSelected
+                                        ? Colors.white
+                                        : (isDark ? AppColors.darkTextSecondary : AppColors.lightTextSecondary),
+                                  ),
                                 ),
                               ),
                             ),
@@ -395,33 +416,41 @@ class WishlistItemDetailScreen extends ConsumerWidget {
                   Row(
                     mainAxisAlignment: MainAxisAlignment.spaceBetween,
                     children: [
-                      if (item.targetDate != null) ...[
-                        Row(
-                          children: [
-                            const Icon(Icons.calendar_today_rounded, size: 16, color: AppColors.cherryAccent),
-                            const SizedBox(width: 6),
-                            Text(
-                              'Hedef: ${item.targetDate!.year}',
-                              style: theme.textTheme.bodyMedium?.copyWith(
-                                fontWeight: FontWeight.w700,
-                                color: isDark ? AppColors.darkTextPrimary : AppColors.lightTextPrimary,
+                      if (item.targetDate != null)
+                        Flexible(
+                          child: Row(
+                            mainAxisSize: MainAxisSize.min,
+                            children: [
+                              const Icon(Icons.calendar_today_rounded, size: 16, color: AppColors.cherryAccent),
+                              const SizedBox(width: 6),
+                              Flexible(
+                                child: Text(
+                                  'Hedef: ${item.targetDate!.year}',
+                                  overflow: TextOverflow.ellipsis,
+                                  style: theme.textTheme.bodyMedium?.copyWith(
+                                    fontWeight: FontWeight.w700,
+                                    color: isDark ? AppColors.darkTextPrimary : AppColors.lightTextPrimary,
+                                  ),
+                                ),
                               ),
+                            ],
+                          ),
+                        ),
+                      Flexible(
+                        child: Container(
+                          padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 4),
+                          decoration: BoxDecoration(
+                            color: isDark ? AppColors.darkCard : AppColors.lightSurface,
+                            borderRadius: BorderRadius.circular(12),
+                          ),
+                          child: Text(
+                            '${item.priority.label} Öncelik',
+                            overflow: TextOverflow.ellipsis,
+                            style: TextStyle(
+                              fontSize: 12,
+                              fontWeight: FontWeight.w600,
+                              color: isDark ? AppColors.darkTextSecondary : AppColors.lightTextSecondary,
                             ),
-                          ],
-                        ),
-                      ],
-                      Container(
-                        padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 4),
-                        decoration: BoxDecoration(
-                          color: isDark ? AppColors.darkCard : AppColors.lightSurface,
-                          borderRadius: BorderRadius.circular(12),
-                        ),
-                        child: Text(
-                          '${item.priority.label} Öncelik',
-                          style: TextStyle(
-                            fontSize: 12,
-                            fontWeight: FontWeight.w600,
-                            color: isDark ? AppColors.darkTextSecondary : AppColors.lightTextSecondary,
                           ),
                         ),
                       ),
@@ -437,12 +466,19 @@ class WishlistItemDetailScreen extends ConsumerWidget {
                       mainAxisAlignment: MainAxisAlignment.spaceBetween,
                       children: [
                         Text('TAHMİNİ FİYAT', style: theme.textTheme.labelSmall),
-                        Text(
-                          _formatPrice(item.price, item.currency),
-                          style: theme.textTheme.displayLarge?.copyWith(
-                            fontSize: 24,
-                            fontWeight: FontWeight.w900,
-                            color: theme.colorScheme.primary,
+                        const SizedBox(width: 12),
+                        Flexible(
+                          child: FittedBox(
+                            fit: BoxFit.scaleDown,
+                            alignment: Alignment.centerRight,
+                            child: Text(
+                              _formatPrice(item.price, item.currency),
+                              style: theme.textTheme.displayLarge?.copyWith(
+                                fontSize: 24,
+                                fontWeight: FontWeight.w900,
+                                color: theme.colorScheme.primary,
+                              ),
+                            ),
                           ),
                         ),
                       ],
@@ -480,9 +516,12 @@ class WishlistItemDetailScreen extends ConsumerWidget {
                       children: [
                         const Icon(Icons.storefront_outlined, size: 16, color: AppColors.cherryAccent),
                         const SizedBox(width: 6),
-                        Text(
-                          'Mağaza / Yer: ${item.store}',
-                          style: theme.textTheme.bodyMedium?.copyWith(fontWeight: FontWeight.w600),
+                        Expanded(
+                          child: Text(
+                            'Mağaza / Yer: ${item.store}',
+                            overflow: TextOverflow.ellipsis,
+                            style: theme.textTheme.bodyMedium?.copyWith(fontWeight: FontWeight.w600),
+                          ),
                         ),
                       ],
                     ),
@@ -496,82 +535,207 @@ class WishlistItemDetailScreen extends ConsumerWidget {
                         final priceAlert = ref.watch(priceAlertForWishProvider(item.id));
                         final isAlertEnabled = priceAlert?.enabled ?? false;
 
-                        return Container(
-                          width: double.infinity,
-                          padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
-                          decoration: BoxDecoration(
-                            color: isDark ? AppColors.darkCard : AppColors.lightCard,
-                            borderRadius: BorderRadius.circular(16),
-                            border: Border.all(
-                              color: isAlertEnabled
-                                  ? AppColors.cherryAccent
-                                  : (isDark ? AppColors.darkCardBorder : AppColors.lightCardBorder),
-                              width: isAlertEnabled ? 1.5 : 1.0,
-                            ),
-                          ),
-                          child: Row(
-                            children: [
-                              Container(
-                                padding: const EdgeInsets.all(8),
-                                decoration: BoxDecoration(
+                        final checkingNotifier = ValueNotifier<bool>(false);
+
+                        return ValueListenableBuilder<bool>(
+                          valueListenable: checkingNotifier,
+                          builder: (context, isChecking, child) {
+                            return Container(
+                              width: double.infinity,
+                              padding: const EdgeInsets.all(16),
+                              decoration: BoxDecoration(
+                                color: isDark ? AppColors.darkCard : AppColors.lightCard,
+                                borderRadius: BorderRadius.circular(20),
+                                border: Border.all(
                                   color: isAlertEnabled
-                                      ? AppColors.cherryAccent.withValues(alpha: 0.15)
-                                      : (isDark ? Colors.white10 : Colors.black.withValues(alpha: 0.05)),
-                                  shape: BoxShape.circle,
-                                ),
-                                child: Icon(
-                                  isAlertEnabled ? Icons.notifications_active_rounded : Icons.notifications_none_rounded,
-                                  color: isAlertEnabled ? AppColors.cherryAccent : (isDark ? Colors.white54 : Colors.black45),
-                                  size: 20,
+                                      ? AppColors.cherryAccent
+                                      : (isDark ? AppColors.darkCardBorder : AppColors.lightCardBorder),
+                                  width: isAlertEnabled ? 1.5 : 1.0,
                                 ),
                               ),
-                              const SizedBox(width: 12),
-                              Expanded(
-                                child: Column(
-                                  crossAxisAlignment: CrossAxisAlignment.start,
-                                  children: [
-                                    Text(
-                                      'Fiyat Takibi (Price Alert)',
-                                      style: TextStyle(
-                                        fontSize: 14,
-                                        fontWeight: FontWeight.w700,
-                                        color: isDark ? AppColors.darkTextPrimary : AppColors.lightTextPrimary,
+                              child: Column(
+                                crossAxisAlignment: CrossAxisAlignment.start,
+                                children: [
+                                  Row(
+                                    children: [
+                                      Container(
+                                        padding: const EdgeInsets.all(8),
+                                        decoration: BoxDecoration(
+                                          color: isAlertEnabled
+                                              ? AppColors.cherryAccent.withValues(alpha: 0.15)
+                                              : (isDark ? Colors.white10 : Colors.black.withValues(alpha: 0.05)),
+                                          shape: BoxShape.circle,
+                                        ),
+                                        child: Icon(
+                                          isAlertEnabled ? Icons.notifications_active_rounded : Icons.notifications_none_rounded,
+                                          color: isAlertEnabled ? AppColors.cherryAccent : (isDark ? Colors.white54 : Colors.black45),
+                                          size: 20,
+                                        ),
                                       ),
-                                    ),
-                                    const SizedBox(height: 2),
-                                    Text(
-                                      isAlertEnabled
-                                          ? 'Fiyat düştüğünde bildirim gönderilecek'
-                                          : 'Fiyat düşüşlerini takip et',
-                                      style: TextStyle(
-                                        fontSize: 12,
-                                        color: isDark ? AppColors.darkTextMuted : AppColors.lightTextMuted,
+                                      const SizedBox(width: 12),
+                                      Expanded(
+                                        child: Column(
+                                          crossAxisAlignment: CrossAxisAlignment.start,
+                                          children: [
+                                            Text(
+                                              'Fiyat Takibi (Price Alert)',
+                                              style: TextStyle(
+                                                fontSize: 14,
+                                                fontWeight: FontWeight.w700,
+                                                color: isDark ? AppColors.darkTextPrimary : AppColors.lightTextPrimary,
+                                              ),
+                                            ),
+                                            const SizedBox(height: 2),
+                                            Text(
+                                              isAlertEnabled
+                                                  ? 'Fiyat düştüğünde bildirim gönderilecek'
+                                                  : 'Fiyat düşüşlerini takip et',
+                                              style: TextStyle(
+                                                fontSize: 12,
+                                                color: isDark ? AppColors.darkTextMuted : AppColors.lightTextMuted,
+                                              ),
+                                            ),
+                                          ],
+                                        ),
                                       ),
+                                      Switch.adaptive(
+                                        value: isAlertEnabled,
+                                        activeTrackColor: AppColors.cherryAccent,
+                                        onChanged: (value) async {
+                                          HapticFeedback.selectionClick();
+                                          await ref.read(priceAlertProvider.notifier).setAlertForWish(
+                                                wishId: item.id,
+                                                enabled: value,
+                                                currentPrice: item.price,
+                                                targetPrice: item.price,
+                                              );
+                                          if (context.mounted) {
+                                            VisiFeedback.showSuccess(
+                                              context,
+                                              value ? 'Fiyat takibi başlatıldı 📉🍒' : 'Fiyat takibi kapatıldı',
+                                            );
+                                          }
+                                        },
+                                      ),
+                                    ],
+                                  ),
+
+                                  if (isAlertEnabled) ...[
+                                    const SizedBox(height: 14),
+                                    const Divider(height: 1),
+                                    const SizedBox(height: 14),
+
+                                    // Price Drop Badge if status is priceDrop
+                                    if (priceAlert?.status == PriceAlertStatus.priceDrop) ...[
+                                      Container(
+                                        width: double.infinity,
+                                        padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
+                                        decoration: BoxDecoration(
+                                          color: AppColors.cherryAccent.withValues(alpha: 0.12),
+                                          borderRadius: BorderRadius.circular(12),
+                                        ),
+                                        child: Row(
+                                          children: [
+                                            const Text('🎉', style: TextStyle(fontSize: 16)),
+                                            const SizedBox(width: 8),
+                                            Expanded(
+                                              child: Text(
+                                                'Fiyat düştü! (Son bilinen: ${item.currency}${priceAlert?.lastKnownPrice?.toStringAsFixed(0)})',
+                                                style: const TextStyle(
+                                                  fontSize: 13,
+                                                  fontWeight: FontWeight.w700,
+                                                  color: AppColors.cherryAccent,
+                                                ),
+                                              ),
+                                            ),
+                                          ],
+                                        ),
+                                      ),
+                                      const SizedBox(height: 12),
+                                    ],
+
+                                    // Check Price Button & Last Checked Info
+                                    Row(
+                                      children: [
+                                        Expanded(
+                                          child: OutlinedButton.icon(
+                                            onPressed: isChecking
+                                                ? null
+                                                : () async {
+                                                    checkingNotifier.value = true;
+                                                    HapticFeedback.mediumImpact();
+
+                                                    final result = await PriceAlertService.checkWishlistItemPrice(item, ref);
+                                                    checkingNotifier.value = false;
+
+                                                    if (context.mounted) {
+                                                      switch (result.status) {
+                                                        case PriceCheckStatus.success:
+                                                          if (result.price != null) {
+                                                            VisiFeedback.showSuccess(
+                                                              context,
+                                                              'Güncel fiyat okundu: ${result.currency ?? item.currency}${result.price!.toStringAsFixed(result.price!.truncateToDouble() == result.price ? 0 : 2)} ✨',
+                                                            );
+                                                          }
+                                                          break;
+                                                        case PriceCheckStatus.unsupported:
+                                                          VisiFeedback.showInfo(
+                                                            context,
+                                                            result.errorMessage ?? 'Bu siteden fiyat otomatik okunamıyor.',
+                                                          );
+                                                          break;
+                                                        case PriceCheckStatus.networkError:
+                                                          VisiFeedback.showError(
+                                                            context,
+                                                            result.errorMessage ?? 'İnternet bağlantı hatası.',
+                                                          );
+                                                          break;
+                                                        case PriceCheckStatus.parseError:
+                                                          VisiFeedback.showError(
+                                                            context,
+                                                            result.errorMessage ?? 'Fiyat ayrıştırma hatası.',
+                                                          );
+                                                          break;
+                                                      }
+                                                    }
+                                                  },
+                                            icon: isChecking
+                                                ? const SizedBox(
+                                                    width: 14,
+                                                    height: 14,
+                                                    child: CircularProgressIndicator(strokeWidth: 2, color: AppColors.cherryAccent),
+                                                  )
+                                                : const Icon(Icons.search_rounded, size: 16),
+                                            label: Text(
+                                              isChecking ? 'Kontrol ediliyor...' : 'Fiyatı Kontrol Et',
+                                              style: const TextStyle(fontSize: 13, fontWeight: FontWeight.w700),
+                                            ),
+                                            style: OutlinedButton.styleFrom(
+                                              padding: const EdgeInsets.symmetric(vertical: 12),
+                                              foregroundColor: AppColors.cherryAccent,
+                                              side: const BorderSide(color: AppColors.cherryAccent),
+                                              shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(14)),
+                                            ),
+                                          ),
+                                        ),
+                                      ],
                                     ),
+
+                                    if (priceAlert?.lastCheckedAt != null) ...[
+                                      const SizedBox(height: 8),
+                                      Text(
+                                        'Son kontrol: ${_formatDate(priceAlert!.lastCheckedAt!)} ${DateFormat('HH:mm').format(priceAlert.lastCheckedAt!)}',
+                                        style: TextStyle(
+                                          fontSize: 11,
+                                          color: isDark ? AppColors.darkTextMuted : AppColors.lightTextMuted,
+                                        ),
+                                      ),
+                                    ],
                                   ],
-                                ),
+                                ],
                               ),
-                              Switch.adaptive(
-                                value: isAlertEnabled,
-                                activeTrackColor: AppColors.cherryAccent,
-                                onChanged: (value) async {
-                                  HapticFeedback.selectionClick();
-                                  await ref.read(priceAlertProvider.notifier).setAlertForWish(
-                                        wishId: item.id,
-                                        enabled: value,
-                                        currentPrice: item.price,
-                                        targetPrice: item.price,
-                                      );
-                                  if (context.mounted) {
-                                    VisiFeedback.showSuccess(
-                                      context,
-                                      value ? 'Fiyat takibi başlatıldı 📉🍒' : 'Fiyat takibi kapatıldı',
-                                    );
-                                  }
-                                },
-                              ),
-                            ],
-                          ),
+                            );
+                          },
                         );
                       },
                     ),

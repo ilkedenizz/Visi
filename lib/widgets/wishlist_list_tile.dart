@@ -87,21 +87,27 @@ class WishlistListTile extends StatelessWidget {
                     Row(
                       children: [
                         if (item.price > 0)
-                          Text(
-                            _formatPrice(item.price, item.currency),
-                            style: theme.textTheme.titleLarge?.copyWith(
-                              fontSize: 14,
-                              fontWeight: FontWeight.w800,
-                              color: theme.colorScheme.primary,
+                          Flexible(
+                            child: Text(
+                              _formatPrice(item.price, item.currency),
+                              overflow: TextOverflow.ellipsis,
+                              style: theme.textTheme.titleLarge?.copyWith(
+                                fontSize: 14,
+                                fontWeight: FontWeight.w800,
+                                color: theme.colorScheme.primary,
+                              ),
                             ),
                           )
                         else
-                          Text(
-                            item.status.label,
-                            style: TextStyle(
-                              fontSize: 12,
-                              fontWeight: FontWeight.w600,
-                              color: isDark ? AppColors.darkTextMuted : AppColors.lightTextMuted,
+                          Flexible(
+                            child: Text(
+                              item.status.label,
+                              overflow: TextOverflow.ellipsis,
+                              style: TextStyle(
+                                fontSize: 12,
+                                fontWeight: FontWeight.w600,
+                                color: isDark ? AppColors.darkTextMuted : AppColors.lightTextMuted,
+                              ),
                             ),
                           ),
                         if (item.targetDate != null) ...[

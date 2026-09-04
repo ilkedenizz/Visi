@@ -272,10 +272,11 @@ class _QuickAddBottomSheetState extends ConsumerState<QuickAddBottomSheet> {
         right: 24,
         bottom: bottomInset + 24,
       ),
-      child: Column(
-        mainAxisSize: MainAxisSize.min,
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
+      child: SingleChildScrollView(
+        child: Column(
+          mainAxisSize: MainAxisSize.min,
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
           // Drag handle bar
           Center(
             child: Container(
@@ -290,20 +291,18 @@ class _QuickAddBottomSheetState extends ConsumerState<QuickAddBottomSheet> {
           const SizedBox(height: 16),
 
           // Duplicate URL Dialog View
-          if (_duplicateItem != null) ...[
-            _buildDuplicateView(isDark, theme),
-          ]
+          if (_duplicateItem != null)
+            _buildDuplicateView(isDark, theme)
           // Focused Link Input Mode
-          else if (_isLinkMode) ...[
-            _buildLinkInputView(isDark, theme),
-          ]
+          else if (_isLinkMode)
+            _buildLinkInputView(isDark, theme)
           // Main Selection Options View
-          else ...[
+          else
             _buildMainSelectionView(isDark, theme),
-          ],
         ],
       ),
-    );
+    ),
+  );
   }
 
   /// Option Selection View (Main View)

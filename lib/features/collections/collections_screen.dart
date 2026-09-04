@@ -43,121 +43,123 @@ class CollectionsScreen extends ConsumerWidget {
                 right: 24,
                 bottom: MediaQuery.of(context).viewInsets.bottom + 24,
               ),
-              child: Column(
-                mainAxisSize: MainAxisSize.min,
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: [
-                  Center(
-                    child: Container(
-                      width: 40,
-                      height: 4,
-                      decoration: BoxDecoration(
-                        color: isDark ? AppColors.darkCardBorder : AppColors.lightCardBorder,
-                        borderRadius: BorderRadius.circular(2),
-                      ),
-                    ),
-                  ),
-                  const SizedBox(height: 16),
-
-                  Text(
-                    'Yeni Koleksiyon',
-                    style: theme.textTheme.titleLarge?.copyWith(
-                      fontSize: 20,
-                      fontWeight: FontWeight.w700,
-                    ),
-                  ),
-                  const SizedBox(height: 16),
-
-                  // Emoji Selector
-                  Text('EMOJİ', style: theme.textTheme.labelSmall),
-                  const SizedBox(height: 8),
-                  SizedBox(
-                    height: 44,
-                    child: ListView.builder(
-                      scrollDirection: Axis.horizontal,
-                      itemCount: emojis.length,
-                      itemBuilder: (context, index) {
-                        final emoji = emojis[index];
-                        final isSelected = selectedEmoji == emoji;
-                        return GestureDetector(
-                          onTap: () {
-                            HapticFeedback.selectionClick();
-                            setModalState(() {
-                              selectedEmoji = emoji;
-                            });
-                          },
-                          child: Container(
-                            width: 44,
-                            margin: const EdgeInsets.only(right: 8),
-                            decoration: BoxDecoration(
-                              color: isSelected
-                                  ? AppColors.cherryAccent
-                                  : (isDark ? AppColors.darkSurface : AppColors.lightSurface),
-                              borderRadius: BorderRadius.circular(12),
-                            ),
-                            child: Center(
-                              child: Text(emoji, style: const TextStyle(fontSize: 20)),
-                            ),
-                          ),
-                        );
-                      },
-                    ),
-                  ),
-                  const SizedBox(height: 16),
-
-                  // Collection Name
-                  Text('KOLEKSİYON ADI', style: theme.textTheme.labelSmall),
-                  const SizedBox(height: 8),
-                  TextField(
-                    controller: nameController,
-                    decoration: const InputDecoration(
-                      hintText: 'Örn: Seyahat Hayalleri',
-                    ),
-                  ),
-                  const SizedBox(height: 16),
-
-                  // Cover Image URL
-                  Text('KAPAK GÖRSELİ (URL)', style: theme.textTheme.labelSmall),
-                  const SizedBox(height: 8),
-                  TextField(
-                    controller: imageController,
-                    decoration: const InputDecoration(
-                      hintText: 'https://images.unsplash.com/...',
-                    ),
-                  ),
-                  const SizedBox(height: 24),
-
-                  SizedBox(
-                    width: double.infinity,
-                    child: ElevatedButton(
-                      onPressed: () {
-                        final name = nameController.text.trim();
-                        if (name.isEmpty) return;
-
-                        final newCol = CollectionModel(
-                          id: const Uuid().v4(),
-                          name: name,
-                          emoji: selectedEmoji,
-                          coverImage: imageController.text.trim().isNotEmpty ? imageController.text.trim() : null,
-                          createdAt: DateTime.now(),
-                        );
-
-                        ref.read(collectionProvider.notifier).addCollection(newCol);
-                        Navigator.pop(context);
-                        VisiFeedback.showSuccess(context, 'Koleksiyon oluşturuldu ✨');
-                      },
-                      style: ElevatedButton.styleFrom(
-                        backgroundColor: AppColors.cherryAccent,
-                        foregroundColor: Colors.white,
-                        padding: const EdgeInsets.symmetric(vertical: 16),
-                        shape: RoundedRectangleBorder(
-                          borderRadius: BorderRadius.circular(16),
+              child: SingleChildScrollView(
+                child: Column(
+                  mainAxisSize: MainAxisSize.min,
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    Center(
+                      child: Container(
+                        width: 40,
+                        height: 4,
+                        decoration: BoxDecoration(
+                          color: isDark ? AppColors.darkCardBorder : AppColors.lightCardBorder,
+                          borderRadius: BorderRadius.circular(2),
                         ),
                       ),
-                      child: const Text('Koleksiyon Oluştur', style: TextStyle(fontWeight: FontWeight.w700)),
                     ),
-                  ),
-                ],
+                    const SizedBox(height: 16),
+
+                    Text(
+                      'Yeni Koleksiyon',
+                      style: theme.textTheme.titleLarge?.copyWith(
+                        fontSize: 20,
+                        fontWeight: FontWeight.w700,
+                      ),
+                    ),
+                    const SizedBox(height: 16),
+
+                    // Emoji Selector
+                    Text('EMOJİ', style: theme.textTheme.labelSmall),
+                    const SizedBox(height: 8),
+                    SizedBox(
+                      height: 44,
+                      child: ListView.builder(
+                        scrollDirection: Axis.horizontal,
+                        itemCount: emojis.length,
+                        itemBuilder: (context, index) {
+                          final emoji = emojis[index];
+                          final isSelected = selectedEmoji == emoji;
+                          return GestureDetector(
+                            onTap: () {
+                              HapticFeedback.selectionClick();
+                              setModalState(() {
+                                selectedEmoji = emoji;
+                              });
+                            },
+                            child: Container(
+                              width: 44,
+                              margin: const EdgeInsets.only(right: 8),
+                              decoration: BoxDecoration(
+                                color: isSelected
+                                    ? AppColors.cherryAccent
+                                    : (isDark ? AppColors.darkSurface : AppColors.lightSurface),
+                                borderRadius: BorderRadius.circular(12),
+                              ),
+                              child: Center(
+                                child: Text(emoji, style: const TextStyle(fontSize: 20)),
+                              ),
+                            ),
+                          );
+                        },
+                      ),
+                    ),
+                    const SizedBox(height: 16),
+
+                    // Collection Name
+                    Text('KOLEKSİYON ADI', style: theme.textTheme.labelSmall),
+                    const SizedBox(height: 8),
+                    TextField(
+                      controller: nameController,
+                      decoration: const InputDecoration(
+                        hintText: 'Örn: Seyahat Hayalleri',
+                      ),
+                    ),
+                    const SizedBox(height: 16),
+
+                    // Cover Image URL
+                    Text('KAPAK GÖRSELİ (URL)', style: theme.textTheme.labelSmall),
+                    const SizedBox(height: 8),
+                    TextField(
+                      controller: imageController,
+                      decoration: const InputDecoration(
+                        hintText: 'https://images.unsplash.com/...',
+                      ),
+                    ),
+                    const SizedBox(height: 24),
+
+                    SizedBox(
+                      width: double.infinity,
+                      child: ElevatedButton(
+                        onPressed: () {
+                          final name = nameController.text.trim();
+                          if (name.isEmpty) return;
+
+                          final newCol = CollectionModel(
+                            id: const Uuid().v4(),
+                            name: name,
+                            emoji: selectedEmoji,
+                            coverImage: imageController.text.trim().isNotEmpty ? imageController.text.trim() : null,
+                            createdAt: DateTime.now(),
+                          );
+
+                          ref.read(collectionProvider.notifier).addCollection(newCol);
+                          Navigator.pop(context);
+                          VisiFeedback.showSuccess(context, 'Koleksiyon oluşturuldu ✨');
+                        },
+                        style: ElevatedButton.styleFrom(
+                          backgroundColor: AppColors.cherryAccent,
+                          foregroundColor: Colors.white,
+                          padding: const EdgeInsets.symmetric(vertical: 16),
+                          shape: RoundedRectangleBorder(
+                            borderRadius: BorderRadius.circular(16),
+                          ),
+                        ),
+                        child: const Text('Koleksiyon Oluştur', style: TextStyle(fontWeight: FontWeight.w700)),
+                      ),
+                    ),
+                  ],
+                ),
               ),
             );
           },
@@ -170,6 +172,9 @@ class CollectionsScreen extends ConsumerWidget {
   Widget build(BuildContext context, WidgetRef ref) {
     final collections = ref.watch(collectionProvider).asData?.value ?? [];
     final wishlist = ref.watch(wishlistProvider).asData?.value ?? [];
+
+    final width = MediaQuery.of(context).size.width;
+    final crossAxisCount = width >= 900 ? 4 : (width >= 600 ? 3 : 2);
 
     return Scaffold(
       body: SafeArea(
@@ -197,8 +202,8 @@ class CollectionsScreen extends ConsumerWidget {
                       )
                     : GridView.builder(
                         padding: const EdgeInsets.only(bottom: 80),
-                        gridDelegate: const SliverGridDelegateWithFixedCrossAxisCount(
-                          crossAxisCount: 2,
+                        gridDelegate: SliverGridDelegateWithFixedCrossAxisCount(
+                          crossAxisCount: crossAxisCount,
                           crossAxisSpacing: 14,
                           mainAxisSpacing: 14,
                           childAspectRatio: 1.15,

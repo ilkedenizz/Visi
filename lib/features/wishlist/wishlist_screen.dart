@@ -29,6 +29,10 @@ class WishlistScreen extends ConsumerWidget {
     final preferences = ref.watch(preferencesProvider).asData?.value ?? const UserPreferences();
     final viewMode = preferences.defaultViewMode;
 
+    final width = MediaQuery.of(context).size.width;
+    final crossAxisCount = width >= 900 ? 4 : (width >= 600 ? 3 : 2);
+    final childAspectRatio = width >= 600 ? 0.85 : 0.76;
+
     return Scaffold(
       body: SafeArea(
         child: Column(
@@ -103,7 +107,7 @@ class WishlistScreen extends ConsumerWidget {
                                     ref.read(preferencesProvider.notifier).updateDefaultViewMode(ViewMode.list);
                                   },
                                 ),
-                              ],
+                               ],
                             ),
                           ),
                         ],
@@ -180,9 +184,9 @@ class WishlistScreen extends ConsumerWidget {
                   : (viewMode == ViewMode.grid
                       ? GridView.builder(
                           padding: const EdgeInsets.fromLTRB(20, 4, 20, 80),
-                          gridDelegate: const SliverGridDelegateWithFixedCrossAxisCount(
-                            crossAxisCount: 2,
-                            childAspectRatio: 0.76,
+                          gridDelegate: SliverGridDelegateWithFixedCrossAxisCount(
+                            crossAxisCount: crossAxisCount,
+                            childAspectRatio: childAspectRatio,
                             crossAxisSpacing: 14,
                             mainAxisSpacing: 14,
                           ),
@@ -239,119 +243,126 @@ class FilterBottomSheet extends ConsumerWidget {
     final filterState = ref.watch(filterProvider);
     final collections = ref.watch(collectionProvider).asData?.value ?? [];
 
-    return Container(
-      decoration: BoxDecoration(
-        color: isDark ? AppColors.darkBackground : AppColors.lightBackground,
-        borderRadius: const BorderRadius.vertical(top: Radius.circular(28)),
+    return ConstrainedBox(
+      constraints: BoxConstraints(
+        maxHeight: MediaQuery.of(context).size.height * 0.85,
       ),
-      padding: EdgeInsets.fromLTRB(20, 16, 20, MediaQuery.of(context).padding.bottom + 20),
-      child: Column(
-        mainAxisSize: MainAxisSize.min,
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-          Center(
-            child: Container(
-              width: 40,
-              height: 4,
-              decoration: BoxDecoration(
-                color: isDark ? Colors.white24 : Colors.black12,
-                borderRadius: BorderRadius.circular(2),
-              ),
-            ),
-          ),
-          const SizedBox(height: 16),
-
-          Row(
-            mainAxisAlignment: MainAxisAlignment.spaceBetween,
+      child: Container(
+        decoration: BoxDecoration(
+          color: isDark ? AppColors.darkBackground : AppColors.lightBackground,
+          borderRadius: const BorderRadius.vertical(top: Radius.circular(28)),
+        ),
+        padding: EdgeInsets.fromLTRB(20, 16, 20, MediaQuery.of(context).padding.bottom + 20),
+        child: SingleChildScrollView(
+          child: Column(
+            mainAxisSize: MainAxisSize.min,
+            crossAxisAlignment: CrossAxisAlignment.start,
             children: [
-              Text(
-                'Filtrele & Sırala',
-                style: theme.textTheme.titleLarge?.copyWith(fontWeight: FontWeight.w800),
+              Center(
+                child: Container(
+                  width: 40,
+                  height: 4,
+                  decoration: BoxDecoration(
+                    color: isDark ? Colors.white24 : Colors.black12,
+                    borderRadius: BorderRadius.circular(2),
+                  ),
+                ),
               ),
-              TextButton(
-                onPressed: () {
-                  ref.read(filterProvider.notifier).resetFilters();
-                  Navigator.pop(context);
-                },
-                child: const Text('Sıfırla', style: TextStyle(color: AppColors.cherryAccent)),
+              const SizedBox(height: 16),
+
+              Row(
+                mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                children: [
+                  Text(
+                    'Filtrele & Sırala',
+                    style: theme.textTheme.titleLarge?.copyWith(fontWeight: FontWeight.w800),
+                  ),
+                  TextButton(
+                    onPressed: () {
+                      ref.read(filterProvider.notifier).resetFilters();
+                      Navigator.pop(context);
+                    },
+                    child: const Text('Sıfırla', style: TextStyle(color: AppColors.cherryAccent)),
+                  ),
+                ],
+              ),
+              const SizedBox(height: 16),
+
+              // Status Filter
+              Text('DURUM', style: theme.textTheme.labelSmall),
+              const SizedBox(height: 8),
+              Wrap(
+                spacing: 8,
+                children: WishStatus.values.map((st) {
+                  final isSelected = filterState.selectedStatus == st;
+                  return ChoiceChip(
+                    label: Text(st.label),
+                    selected: isSelected,
+                    onSelected: (selected) {
+                      ref.read(filterProvider.notifier).setStatusFilter(selected ? st : null);
+                    },
+                  );
+                }).toList(),
+              ),
+              const SizedBox(height: 16),
+
+              // Collection Filter
+              if (collections.isNotEmpty) ...[
+                Text('KOLEKSİYON', style: theme.textTheme.labelSmall),
+                const SizedBox(height: 8),
+                Wrap(
+                  spacing: 8,
+                  children: collections.map((col) {
+                    final isSelected = filterState.selectedCollectionId == col.id;
+                    return ChoiceChip(
+                      label: Text('${col.emoji} ${col.name}'),
+                      selected: isSelected,
+                      onSelected: (selected) {
+                        ref.read(filterProvider.notifier).setCollectionFilter(selected ? col.id : null);
+                      },
+                    );
+                  }).toList(),
+                ),
+                const SizedBox(height: 16),
+              ],
+
+              // Sort Options
+              Text('SIRALAMA', style: theme.textTheme.labelSmall),
+              const SizedBox(height: 8),
+              Wrap(
+                spacing: 8,
+                children: SortOption.values.map((opt) {
+                  final isSelected = filterState.sortOption == opt;
+                  return ChoiceChip(
+                    label: Text(opt.label),
+                    selected: isSelected,
+                    onSelected: (selected) {
+                      if (selected) {
+                        ref.read(filterProvider.notifier).setSortOption(opt);
+                      }
+                    },
+                  );
+                }).toList(),
+              ),
+              const SizedBox(height: 24),
+
+              // Apply Action Button
+              SizedBox(
+                width: double.infinity,
+                child: ElevatedButton(
+                  onPressed: () => Navigator.pop(context),
+                  style: ElevatedButton.styleFrom(
+                    backgroundColor: AppColors.cherryAccent,
+                    foregroundColor: Colors.white,
+                    padding: const EdgeInsets.symmetric(vertical: 16),
+                    shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
+                  ),
+                  child: const Text('Sonuçları Göster', style: TextStyle(fontSize: 16, fontWeight: FontWeight.w700)),
+                ),
               ),
             ],
           ),
-          const SizedBox(height: 16),
-
-          // Status Filter
-          Text('DURUM', style: theme.textTheme.labelSmall),
-          const SizedBox(height: 8),
-          Wrap(
-            spacing: 8,
-            children: WishStatus.values.map((st) {
-              final isSelected = filterState.selectedStatus == st;
-              return ChoiceChip(
-                label: Text(st.label),
-                selected: isSelected,
-                onSelected: (selected) {
-                  ref.read(filterProvider.notifier).setStatusFilter(selected ? st : null);
-                },
-              );
-            }).toList(),
-          ),
-          const SizedBox(height: 16),
-
-          // Collection Filter
-          if (collections.isNotEmpty) ...[
-            Text('KOLEKSİYON', style: theme.textTheme.labelSmall),
-            const SizedBox(height: 8),
-            Wrap(
-              spacing: 8,
-              children: collections.map((col) {
-                final isSelected = filterState.selectedCollectionId == col.id;
-                return ChoiceChip(
-                  label: Text('${col.emoji} ${col.name}'),
-                  selected: isSelected,
-                  onSelected: (selected) {
-                    ref.read(filterProvider.notifier).setCollectionFilter(selected ? col.id : null);
-                  },
-                );
-              }).toList(),
-            ),
-            const SizedBox(height: 16),
-          ],
-
-          // Sort Options
-          Text('SIRALAMA', style: theme.textTheme.labelSmall),
-          const SizedBox(height: 8),
-          Wrap(
-            spacing: 8,
-            children: SortOption.values.map((opt) {
-              final isSelected = filterState.sortOption == opt;
-              return ChoiceChip(
-                label: Text(opt.label),
-                selected: isSelected,
-                onSelected: (selected) {
-                  if (selected) {
-                    ref.read(filterProvider.notifier).setSortOption(opt);
-                  }
-                },
-              );
-            }).toList(),
-          ),
-          const SizedBox(height: 24),
-
-          // Apply Action Button
-          SizedBox(
-            width: double.infinity,
-            child: ElevatedButton(
-              onPressed: () => Navigator.pop(context),
-              style: ElevatedButton.styleFrom(
-                backgroundColor: AppColors.cherryAccent,
-                foregroundColor: Colors.white,
-                padding: const EdgeInsets.symmetric(vertical: 16),
-                shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
-              ),
-              child: const Text('Sonuçları Göster', style: TextStyle(fontSize: 16, fontWeight: FontWeight.w700)),
-            ),
-          ),
-        ],
+        ),
       ),
     );
   }

@@ -29,7 +29,7 @@ class AppColors {
   
   static const Color darkTextPrimary = Color(0xFFF7F3F6);   // Soft off-white light text
   static const Color darkTextSecondary = Color(0xFFC7B7C2); // Soft muted light text
-  static const Color darkTextMuted = Color(0xFF8C7987);     // Dim plum text
+  static const Color darkTextMuted = Color(0xFFA28E9D);     // Dim plum text with enhanced contrast
 
   // --- Shared Brand Accents ---
   static const Color cherryAccent = Color(0xFFB8324A);     // Muted cherry red / crimson

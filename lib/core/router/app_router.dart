@@ -23,7 +23,7 @@ class _RouterRefreshNotifier extends ChangeNotifier {
       (previous, next) {
         final prevVal = previous?.asData?.value.hasCompletedOnboarding;
         final nextVal = next.asData?.value.hasCompletedOnboarding;
-        if (prevVal != nextVal) {
+        if (prevVal != nextVal || previous?.isLoading != next.isLoading) {
           notifyListeners();
         }
       },
@@ -38,7 +38,11 @@ final appRouterProvider = Provider<GoRouter>((ref) {
     initialLocation: '/',
     refreshListenable: refreshNotifier,
     redirect: (context, state) {
-      final prefs = ref.read(preferencesProvider).asData?.value ?? const UserPreferences();
+      final prefsAsync = ref.read(preferencesProvider);
+      if (prefsAsync.isLoading) {
+        return null;
+      }
+      final prefs = prefsAsync.asData?.value ?? const UserPreferences();
       final isOnboarding = state.matchedLocation == '/onboarding';
       if (!prefs.hasCompletedOnboarding && !isOnboarding) {
         return '/onboarding';

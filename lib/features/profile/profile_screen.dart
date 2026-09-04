@@ -93,11 +93,11 @@ class ProfileScreen extends ConsumerWidget {
                 child: Row(
                   mainAxisAlignment: MainAxisAlignment.spaceAround,
                   children: [
-                    _buildStatColumn(context, '$totalWishes', 'Toplum Dilek'),
+                    Expanded(child: _buildStatColumn(context, '$totalWishes', 'Toplam Dilek')),
                     Container(height: 36, width: 1, color: isDark ? AppColors.darkCardBorder : AppColors.lightCardBorder),
-                    _buildStatColumn(context, '$fulfilledWishes', 'Gerçek Oldu ✨'),
+                    Expanded(child: _buildStatColumn(context, '$fulfilledWishes', 'Gerçek Oldu ✨')),
                     Container(height: 36, width: 1, color: isDark ? AppColors.darkCardBorder : AppColors.lightCardBorder),
-                    _buildStatColumn(context, '$totalCollections', 'Koleksiyon'),
+                    Expanded(child: _buildStatColumn(context, '$totalCollections', 'Koleksiyon')),
                   ],
                 ),
               ),

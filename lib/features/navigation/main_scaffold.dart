@@ -130,43 +130,38 @@ class _MainScaffoldState extends ConsumerState<MainScaffold> {
                 ),
               ),
             ),
-            child: SafeArea(
-              child: Padding(
-                padding: const EdgeInsets.symmetric(vertical: 4),
-                child: BottomNavigationBar(
-                  currentIndex: widget.navigationShell.currentIndex,
-                  onTap: _onTap,
-                  type: BottomNavigationBarType.fixed,
-                  backgroundColor: Colors.transparent,
-                  elevation: 0,
-                  selectedItemColor: isDark ? AppColors.cherryAccentDark : AppColors.cherryAccent,
-                  unselectedItemColor: isDark ? AppColors.darkTextMuted : AppColors.lightTextMuted,
-                  selectedLabelStyle: const TextStyle(fontWeight: FontWeight.w700, fontSize: 11),
-                  unselectedLabelStyle: const TextStyle(fontWeight: FontWeight.w500, fontSize: 11),
-                  items: const [
-                    BottomNavigationBarItem(
-                      icon: Icon(Icons.grid_view_outlined, size: 22),
-                      activeIcon: Icon(Icons.grid_view_rounded, size: 22),
-                      label: 'Ana Sayfa',
-                    ),
-                    BottomNavigationBarItem(
-                      icon: Icon(Icons.favorite_outline_rounded, size: 22),
-                      activeIcon: Icon(Icons.favorite_rounded, size: 22),
-                      label: 'Dilekler',
-                    ),
-                    BottomNavigationBarItem(
-                      icon: Icon(Icons.style_outlined, size: 22),
-                      activeIcon: Icon(Icons.style_rounded, size: 22),
-                      label: 'Koleksiyonlar',
-                    ),
-                    BottomNavigationBarItem(
-                      icon: Icon(Icons.person_outline_rounded, size: 22),
-                      activeIcon: Icon(Icons.person_rounded, size: 22),
-                      label: 'Profil',
-                    ),
-                  ],
+            child: BottomNavigationBar(
+              currentIndex: widget.navigationShell.currentIndex,
+              onTap: _onTap,
+              type: BottomNavigationBarType.fixed,
+              backgroundColor: Colors.transparent,
+              elevation: 0,
+              selectedItemColor: isDark ? AppColors.cherryAccentDark : AppColors.cherryAccent,
+              unselectedItemColor: isDark ? AppColors.darkTextMuted : AppColors.lightTextMuted,
+              selectedLabelStyle: const TextStyle(fontWeight: FontWeight.w700, fontSize: 11),
+              unselectedLabelStyle: const TextStyle(fontWeight: FontWeight.w500, fontSize: 11),
+              items: const [
+                BottomNavigationBarItem(
+                  icon: Icon(Icons.grid_view_outlined, size: 22),
+                  activeIcon: Icon(Icons.grid_view_rounded, size: 22),
+                  label: 'Ana Sayfa',
                 ),
-              ),
+                BottomNavigationBarItem(
+                  icon: Icon(Icons.favorite_outline_rounded, size: 22),
+                  activeIcon: Icon(Icons.favorite_rounded, size: 22),
+                  label: 'Dilekler',
+                ),
+                BottomNavigationBarItem(
+                  icon: Icon(Icons.style_outlined, size: 22),
+                  activeIcon: Icon(Icons.style_rounded, size: 22),
+                  label: 'Koleksiyonlar',
+                ),
+                BottomNavigationBarItem(
+                  icon: Icon(Icons.person_outline_rounded, size: 22),
+                  activeIcon: Icon(Icons.person_rounded, size: 22),
+                  label: 'Profil',
+                ),
+              ],
             ),
           ),
         );
