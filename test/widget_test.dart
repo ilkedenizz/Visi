@@ -193,12 +193,26 @@ void main() {
   });
 
   group('Visi Default Theme & Preferences Test', () {
-    test('UserPreferences defaults strictly to ThemeMode.light on fresh launch', () {
+    test('UserPreferences defaults strictly to ThemeMode.light and false onboarding on fresh launch', () {
       const prefs = UserPreferences();
       expect(prefs.themeMode, equals(ThemeMode.light));
+      expect(prefs.hasCompletedOnboarding, isFalse);
 
       final restored = UserPreferences.fromMap({});
       expect(restored.themeMode, equals(ThemeMode.light));
+      expect(restored.hasCompletedOnboarding, isFalse);
+    });
+
+    test('StorageService persists hasCompletedOnboarding state across restarts', () async {
+      SharedPreferences.setMockInitialValues({});
+      final storage1 = await StorageService.init();
+      expect(storage1.getPreferences().hasCompletedOnboarding, isFalse);
+
+      final updated = storage1.getPreferences().copyWith(hasCompletedOnboarding: true);
+      await storage1.savePreferences(updated);
+
+      final storage2 = await StorageService.init();
+      expect(storage2.getPreferences().hasCompletedOnboarding, isTrue);
     });
   });
 

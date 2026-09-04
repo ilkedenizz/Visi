@@ -5,6 +5,7 @@ import 'dart:typed_data';
 import 'dart:html' as html;
 import 'package:shared_preferences/shared_preferences.dart';
 
+import '../constants/app_constants.dart';
 import '../../models/collection_model.dart';
 import '../../models/price_alert.dart';
 import '../../models/user_preferences.dart';
@@ -13,10 +14,11 @@ import 'storage_repository.dart';
 
 /// Web implementation of [StorageRepository] using IndexedDB for large data
 /// (wishlist, collections & price alerts) and `SharedPreferences` for small preferences.
-/// Also stores image blobs in an IndexedDB store.
+/// Uses safe async initialization to prevent LateInitializationErrors.
 class WebStorageRepository implements StorageRepository {
-  late final dynamic _db;
-  late final SharedPreferences _prefs;
+  dynamic _db;
+  SharedPreferences? _prefs;
+  Future<void>? _initFuture;
 
   static const String _dbName = 'visi_web_db';
   static const int _dbVersion = 2;
@@ -27,30 +29,51 @@ class WebStorageRepository implements StorageRepository {
 
   @override
   Future<void> init() async {
-    final idbFactory = html.window.indexedDB!;
-    _db = await idbFactory.open(_dbName, version: _dbVersion,
-        onUpgradeNeeded: (e) {
-      final db = e.target.result;
-      if (!db.objectStoreNames!.contains(_wishlistStore)) {
-        db.createObjectStore(_wishlistStore, keyPath: 'id');
-      }
-      if (!db.objectStoreNames!.contains(_collectionsStore)) {
-        db.createObjectStore(_collectionsStore, keyPath: 'id');
-      }
-      if (!db.objectStoreNames!.contains(_imagesStore)) {
-        db.createObjectStore(_imagesStore, keyPath: 'id');
-      }
-      if (!db.objectStoreNames!.contains(_priceAlertsStore)) {
-        db.createObjectStore(_priceAlertsStore, keyPath: 'id');
-      }
-    });
+    _initFuture ??= _doInit();
+    await _initFuture;
+  }
+
+  Future<void> _doInit() async {
+    final idbFactory = html.window.indexedDB;
+    if (idbFactory != null) {
+      _db = await idbFactory.open(_dbName, version: _dbVersion,
+          onUpgradeNeeded: (e) {
+        final db = e.target.result;
+        if (!db.objectStoreNames!.contains(_wishlistStore)) {
+          db.createObjectStore(_wishlistStore, keyPath: 'id');
+        }
+        if (!db.objectStoreNames!.contains(_collectionsStore)) {
+          db.createObjectStore(_collectionsStore, keyPath: 'id');
+        }
+        if (!db.objectStoreNames!.contains(_imagesStore)) {
+          db.createObjectStore(_imagesStore, keyPath: 'id');
+        }
+        if (!db.objectStoreNames!.contains(_priceAlertsStore)) {
+          db.createObjectStore(_priceAlertsStore, keyPath: 'id');
+        }
+      });
+    }
     _prefs = await SharedPreferences.getInstance();
+  }
+
+  Future<SharedPreferences> _getPrefs() async {
+    if (_prefs != null) return _prefs!;
+    await init();
+    return _prefs!;
+  }
+
+  Future<dynamic> _getDb() async {
+    if (_db != null) return _db!;
+    await init();
+    return _db!;
   }
 
   // ---------- Wishlist ----------
   @override
   Future<List<WishlistItem>> loadWishlistItems() async {
-    final tx = _db.transaction(_wishlistStore, 'readonly');
+    final db = await _getDb();
+    if (db == null) return [];
+    final tx = db.transaction(_wishlistStore, 'readonly');
     final store = tx.objectStore(_wishlistStore);
     final records = await store.getAll(null);
     await tx.completed;
@@ -62,7 +85,9 @@ class WebStorageRepository implements StorageRepository {
 
   @override
   Future<void> saveWishlistItems(List<WishlistItem> items) async {
-    final tx = _db.transaction(_wishlistStore, 'readwrite');
+    final db = await _getDb();
+    if (db == null) return;
+    final tx = db.transaction(_wishlistStore, 'readwrite');
     final store = tx.objectStore(_wishlistStore);
     await store.clear();
     for (final item in items) {
@@ -75,7 +100,9 @@ class WebStorageRepository implements StorageRepository {
   // ---------- Collections ----------
   @override
   Future<List<CollectionModel>> loadCollections() async {
-    final tx = _db.transaction(_collectionsStore, 'readonly');
+    final db = await _getDb();
+    if (db == null) return [];
+    final tx = db.transaction(_collectionsStore, 'readonly');
     final store = tx.objectStore(_collectionsStore);
     final records = await store.getAll(null);
     await tx.completed;
@@ -87,7 +114,9 @@ class WebStorageRepository implements StorageRepository {
 
   @override
   Future<void> saveCollections(List<CollectionModel> collections) async {
-    final tx = _db.transaction(_collectionsStore, 'readwrite');
+    final db = await _getDb();
+    if (db == null) return;
+    final tx = db.transaction(_collectionsStore, 'readwrite');
     final store = tx.objectStore(_collectionsStore);
     await store.clear();
     for (final col in collections) {
@@ -100,20 +129,31 @@ class WebStorageRepository implements StorageRepository {
   // ---------- Preferences ----------
   @override
   Future<UserPreferences> loadPreferences() async {
-    final raw = _prefs.getString('visi_preferences_v1');
+    final prefs = await _getPrefs();
+    final raw = prefs.getString(AppConstants.storageKeyPreferences) ??
+        prefs.getString('visi_preferences_v1');
     if (raw == null) return const UserPreferences();
-    return UserPreferences.fromJson(raw);
+    try {
+      return UserPreferences.fromJson(raw);
+    } catch (_) {
+      return const UserPreferences();
+    }
   }
 
   @override
   Future<void> savePreferences(UserPreferences preferences) async {
-    await _prefs.setString('visi_preferences_v1', preferences.toJson());
+    final prefs = await _getPrefs();
+    final jsonStr = preferences.toJson();
+    await prefs.setString(AppConstants.storageKeyPreferences, jsonStr);
+    await prefs.setString('visi_preferences_v1', jsonStr);
   }
 
   // ---------- Price Alerts ----------
   @override
   Future<List<PriceAlert>> loadPriceAlerts() async {
-    final tx = _db.transaction(_priceAlertsStore, 'readonly');
+    final db = await _getDb();
+    if (db == null) return [];
+    final tx = db.transaction(_priceAlertsStore, 'readonly');
     final store = tx.objectStore(_priceAlertsStore);
     final records = await store.getAll(null);
     await tx.completed;
@@ -125,7 +165,9 @@ class WebStorageRepository implements StorageRepository {
 
   @override
   Future<void> savePriceAlerts(List<PriceAlert> alerts) async {
-    final tx = _db.transaction(_priceAlertsStore, 'readwrite');
+    final db = await _getDb();
+    if (db == null) return;
+    final tx = db.transaction(_priceAlertsStore, 'readwrite');
     final store = tx.objectStore(_priceAlertsStore);
     await store.clear();
     for (final alert in alerts) {
@@ -137,7 +179,9 @@ class WebStorageRepository implements StorageRepository {
 
   // ---------- Image storage (IndexedDB blobs) ----------
   Future<void> saveImage(String id, Uint8List data) async {
-    final tx = _db.transaction(_imagesStore, 'readwrite');
+    final db = await _getDb();
+    if (db == null) return;
+    final tx = db.transaction(_imagesStore, 'readwrite');
     final store = tx.objectStore(_imagesStore);
     final blob = html.Blob([data]);
     await store.put(blob, id);
@@ -145,7 +189,9 @@ class WebStorageRepository implements StorageRepository {
   }
 
   Future<Uint8List?> loadImage(String id) async {
-    final tx = _db.transaction(_imagesStore, 'readonly');
+    final db = await _getDb();
+    if (db == null) return null;
+    final tx = db.transaction(_imagesStore, 'readonly');
     final store = tx.objectStore(_imagesStore);
     final blob = await store.getObject(id) as html.Blob?;
     await tx.completed;
@@ -158,7 +204,9 @@ class WebStorageRepository implements StorageRepository {
   }
 
   Future<void> deleteImage(String id) async {
-    final tx = _db.transaction(_imagesStore, 'readwrite');
+    final db = await _getDb();
+    if (db == null) return;
+    final tx = db.transaction(_imagesStore, 'readwrite');
     final store = tx.objectStore(_imagesStore);
     await store.delete(id);
     await tx.completed;
@@ -166,7 +214,9 @@ class WebStorageRepository implements StorageRepository {
 
   // ---------- Image IDs ----------
   Future<List<String>> getAllImageIds() async {
-    final tx = _db.transaction(_imagesStore, 'readonly');
+    final db = await _getDb();
+    if (db == null) return [];
+    final tx = db.transaction(_imagesStore, 'readonly');
     final store = tx.objectStore(_imagesStore);
     final keys = await store.getAllKeys(null);
     await tx.completed;
@@ -176,11 +226,15 @@ class WebStorageRepository implements StorageRepository {
   // ---------- Clear all ----------
   @override
   Future<void> clearAll() async {
-    for (final name in [_wishlistStore, _collectionsStore, _imagesStore, _priceAlertsStore]) {
-      final tx = _db.transaction(name, 'readwrite');
-      await tx.objectStore(name).clear();
-      await tx.completed;
+    final db = await _getDb();
+    if (db != null) {
+      for (final name in [_wishlistStore, _collectionsStore, _imagesStore, _priceAlertsStore]) {
+        final tx = db.transaction(name, 'readwrite');
+        await tx.objectStore(name).clear();
+        await tx.completed;
+      }
     }
-    await _prefs.clear();
+    final prefs = await _getPrefs();
+    await prefs.clear();
   }
 }
