@@ -7,7 +7,8 @@ class AppConstants {
   // Storage Keys
   static const String storageKeyWishlistItems = 'visi_wishlist_items_v1';
   static const String storageKeyCollections = 'visi_collections_v1';
-  static const String storageKeyPreferences = 'visi_preferences_v1';
+  static const String storageKeyPriceAlerts = 'visi_price_alerts_v1';
+  static const String storageKeyPreferences = 'visi_user_preferences_v1';
   static const String storageKeyIsFirstLaunch = 'visi_is_first_launch_v1';
 
   // Default Currencies

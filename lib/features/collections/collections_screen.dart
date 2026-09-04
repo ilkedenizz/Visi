@@ -168,8 +168,8 @@ class CollectionsScreen extends ConsumerWidget {
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
-    final collections = ref.watch(collectionProvider);
-    final wishlist = ref.watch(wishlistProvider);
+    final collections = ref.watch(collectionProvider).asData?.value ?? [];
+    final wishlist = ref.watch(wishlistProvider).asData?.value ?? [];
 
     return Scaffold(
       body: SafeArea(

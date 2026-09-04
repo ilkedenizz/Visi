@@ -8,8 +8,10 @@ import 'package:url_launcher/url_launcher.dart';
 import '../../core/theme/app_colors.dart';
 import '../../models/collection_model.dart';
 import '../../models/wish_status.dart';
+import '../../models/wish_type.dart';
 import '../../models/wishlist_item.dart';
 import '../../providers/collection_provider.dart';
+import '../../providers/price_alert_provider.dart';
 import '../../providers/wishlist_provider.dart';
 import '../../widgets/visi_cherry_logo.dart';
 import '../../widgets/visi_feedback.dart';
@@ -98,8 +100,8 @@ class WishlistItemDetailScreen extends ConsumerWidget {
   Widget build(BuildContext context, WidgetRef ref) {
     final theme = Theme.of(context);
     final isDark = theme.brightness == Brightness.dark;
-    final wishlist = ref.watch(wishlistProvider);
-    final collections = ref.watch(collectionProvider);
+    final wishlist = ref.watch(wishlistProvider).asData?.value ?? [];
+    final collections = ref.watch(collectionProvider).asData?.value ?? [];
 
     final item = wishlist.firstWhere(
       (i) => i.id == itemId,
@@ -483,6 +485,95 @@ class WishlistItemDetailScreen extends ConsumerWidget {
                           style: theme.textTheme.bodyMedium?.copyWith(fontWeight: FontWeight.w600),
                         ),
                       ],
+                    ),
+                    const SizedBox(height: 20),
+                  ],
+
+                  // Price Alert Section (ONLY IF toOwn + productUrl + price > 0)
+                  if (item.type == WishType.toOwn && item.productUrl != null && item.productUrl!.isNotEmpty && item.price > 0) ...[
+                    Consumer(
+                      builder: (context, ref, child) {
+                        final priceAlert = ref.watch(priceAlertForWishProvider(item.id));
+                        final isAlertEnabled = priceAlert?.enabled ?? false;
+
+                        return Container(
+                          width: double.infinity,
+                          padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
+                          decoration: BoxDecoration(
+                            color: isDark ? AppColors.darkCard : AppColors.lightCard,
+                            borderRadius: BorderRadius.circular(16),
+                            border: Border.all(
+                              color: isAlertEnabled
+                                  ? AppColors.cherryAccent
+                                  : (isDark ? AppColors.darkCardBorder : AppColors.lightCardBorder),
+                              width: isAlertEnabled ? 1.5 : 1.0,
+                            ),
+                          ),
+                          child: Row(
+                            children: [
+                              Container(
+                                padding: const EdgeInsets.all(8),
+                                decoration: BoxDecoration(
+                                  color: isAlertEnabled
+                                      ? AppColors.cherryAccent.withValues(alpha: 0.15)
+                                      : (isDark ? Colors.white10 : Colors.black.withValues(alpha: 0.05)),
+                                  shape: BoxShape.circle,
+                                ),
+                                child: Icon(
+                                  isAlertEnabled ? Icons.notifications_active_rounded : Icons.notifications_none_rounded,
+                                  color: isAlertEnabled ? AppColors.cherryAccent : (isDark ? Colors.white54 : Colors.black45),
+                                  size: 20,
+                                ),
+                              ),
+                              const SizedBox(width: 12),
+                              Expanded(
+                                child: Column(
+                                  crossAxisAlignment: CrossAxisAlignment.start,
+                                  children: [
+                                    Text(
+                                      'Fiyat Takibi (Price Alert)',
+                                      style: TextStyle(
+                                        fontSize: 14,
+                                        fontWeight: FontWeight.w700,
+                                        color: isDark ? AppColors.darkTextPrimary : AppColors.lightTextPrimary,
+                                      ),
+                                    ),
+                                    const SizedBox(height: 2),
+                                    Text(
+                                      isAlertEnabled
+                                          ? 'Fiyat düştüğünde bildirim gönderilecek'
+                                          : 'Fiyat düşüşlerini takip et',
+                                      style: TextStyle(
+                                        fontSize: 12,
+                                        color: isDark ? AppColors.darkTextMuted : AppColors.lightTextMuted,
+                                      ),
+                                    ),
+                                  ],
+                                ),
+                              ),
+                              Switch.adaptive(
+                                value: isAlertEnabled,
+                                activeTrackColor: AppColors.cherryAccent,
+                                onChanged: (value) async {
+                                  HapticFeedback.selectionClick();
+                                  await ref.read(priceAlertProvider.notifier).setAlertForWish(
+                                        wishId: item.id,
+                                        enabled: value,
+                                        currentPrice: item.price,
+                                        targetPrice: item.price,
+                                      );
+                                  if (context.mounted) {
+                                    VisiFeedback.showSuccess(
+                                      context,
+                                      value ? 'Fiyat takibi başlatıldı 📉🍒' : 'Fiyat takibi kapatıldı',
+                                    );
+                                  }
+                                },
+                              ),
+                            ],
+                          ),
+                        );
+                      },
                     ),
                     const SizedBox(height: 20),
                   ],

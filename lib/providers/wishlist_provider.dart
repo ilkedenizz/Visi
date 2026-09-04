@@ -1,55 +1,66 @@
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import '../models/wishlist_item.dart';
-import '../services/image_storage_service.dart';
 import 'storage_provider.dart';
+import 'image_repository_provider.dart';
 
-class WishlistNotifier extends Notifier<List<WishlistItem>> {
+class WishlistNotifier extends AsyncNotifier<List<WishlistItem>> {
   WishlistItem? _lastDeletedItem;
   int? _lastDeletedIndex;
 
   WishlistItem? get lastDeletedItem => _lastDeletedItem;
 
   @override
-  List<WishlistItem> build() {
-    final storageService = ref.watch(storageServiceProvider);
-    final items = storageService.getWishlistItems();
-    ImageStorageService.cleanupOrphanedImages(items);
+  Future<List<WishlistItem>> build() async {
+    final repository = ref.watch(storageRepositoryProvider);
+    final items = await repository.loadWishlistItems();
+    // Cleanup orphaned images using ImageRepository (web) or ImageStorageService (android)
+    final imageRepo = ref.read(imageRepositoryProvider);
+    await imageRepo.cleanupOrphanedImages(items);
     return items;
   }
 
   Future<void> addItem(WishlistItem item) async {
-    state = [item, ...state];
-    await ref.read(storageServiceProvider).saveWishlistItems(state);
+    final current = state.asData?.value ?? [];
+    final updated = [item, ...current];
+    state = AsyncData(updated);
+    final repo = ref.read(storageRepositoryProvider);
+    await repo.saveWishlistItems(updated);
   }
 
   Future<void> updateItem(WishlistItem updatedItem) async {
-    final oldItemIndex = state.indexWhere((item) => item.id == updatedItem.id);
+    final current = state.asData?.value ?? [];
+    final oldItemIndex = current.indexWhere((i) => i.id == updatedItem.id);
     if (oldItemIndex != -1) {
-      final oldPath = state[oldItemIndex].imagePath;
+      final oldPath = current[oldItemIndex].imagePath;
       if (oldPath != null && oldPath != updatedItem.imagePath) {
-        await ImageStorageService.deleteLocalImage(oldPath);
+        final imgRepo = ref.read(imageRepositoryProvider);
+        await imgRepo.deleteImage(oldPath);
       }
     }
-    state = [
-      for (final item in state)
+    final updated = [
+      for (final item in current)
         if (item.id == updatedItem.id) updatedItem else item
     ];
-    await ref.read(storageServiceProvider).saveWishlistItems(state);
+    state = AsyncData(updated);
+    final repo = ref.read(storageRepositoryProvider);
+    await repo.saveWishlistItems(updated);
   }
 
   Future<WishlistItem?> deleteItem(String id) async {
-    final index = state.indexWhere((item) => item.id == id);
+    final current = state.asData?.value ?? [];
+    final index = current.indexWhere((i) => i.id == id);
     if (index != -1) {
-      // Clean up previous unrestored deleted item image if different
-      if (_lastDeletedItem != null && _lastDeletedItem!.id != id) {
-        await ImageStorageService.deleteLocalImage(_lastDeletedItem!.imagePath);
+      final pendingDeletePath = _lastDeletedItem?.imagePath;
+      if (pendingDeletePath != null) {
+        final imgRepo = ref.read(imageRepositoryProvider);
+        await imgRepo.deleteImage(pendingDeletePath);
       }
-      _lastDeletedItem = state[index];
+      _lastDeletedItem = current[index];
       _lastDeletedIndex = index;
-      final updated = List<WishlistItem>.from(state);
-      updated.removeAt(index);
-      state = updated;
-      await ref.read(storageServiceProvider).saveWishlistItems(state);
+      final updated = List<WishlistItem>.from(current)..removeAt(index);
+      state = AsyncData(updated);
+      final repo = ref.read(storageRepositoryProvider);
+      await repo.saveWishlistItems(updated);
       return _lastDeletedItem;
     }
     return null;
@@ -57,40 +68,43 @@ class WishlistNotifier extends Notifier<List<WishlistItem>> {
 
   Future<bool> undoDelete() async {
     if (_lastDeletedItem != null) {
-      final itemToRestore = _lastDeletedItem!;
-      final index = _lastDeletedIndex ?? 0;
-      final updated = List<WishlistItem>.from(state);
-      final insertIndex = index <= updated.length ? index : updated.length;
-      updated.insert(insertIndex, itemToRestore);
-      state = updated;
+      final current = state.asData?.value ?? [];
+      final insertIndex = _lastDeletedIndex ?? current.length;
+      final updated = List<WishlistItem>.from(current)
+        ..insert(insertIndex, _lastDeletedItem!);
+      state = AsyncData(updated);
       _lastDeletedItem = null;
       _lastDeletedIndex = null;
-      await ref.read(storageServiceProvider).saveWishlistItems(state);
+      final repo = ref.read(storageRepositoryProvider);
+      await repo.saveWishlistItems(updated);
       return true;
     }
     return false;
   }
 
   Future<void> toggleFavorite(String id) async {
-    state = [
-      for (final item in state)
+    final current = state.asData?.value ?? [];
+    final updated = [
+      for (final item in current)
         if (item.id == id) item.copyWith(isFavorite: !item.isFavorite) else item
     ];
-    await ref.read(storageServiceProvider).saveWishlistItems(state);
+    state = AsyncData(updated);
+    final repo = ref.read(storageRepositoryProvider);
+    await repo.saveWishlistItems(updated);
   }
 }
 
-final wishlistProvider = NotifierProvider<WishlistNotifier, List<WishlistItem>>(WishlistNotifier.new);
+final wishlistProvider = AsyncNotifierProvider<WishlistNotifier, List<WishlistItem>>(WishlistNotifier.new);
 
 /// Returns favorite wishlist items
 final favoriteItemsProvider = Provider<List<WishlistItem>>((ref) {
-  final items = ref.watch(wishlistProvider);
+  final items = ref.watch(wishlistProvider).asData?.value ?? [];
   return items.where((item) => item.isFavorite).toList();
 });
 
 /// Returns recent wishlist items (latest 6)
 final recentItemsProvider = Provider<List<WishlistItem>>((ref) {
-  final items = [...ref.watch(wishlistProvider)];
+  final items = [...?ref.watch(wishlistProvider).asData?.value];
   items.sort((a, b) => b.createdAt.compareTo(a.createdAt));
   return items.take(6).toList();
 });

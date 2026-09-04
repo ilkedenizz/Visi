@@ -141,7 +141,7 @@ final filterProvider = NotifierProvider<FilterNotifier, FilterState>(FilterNotif
 
 /// Computes filtered and sorted wishlist items
 final filteredWishlistProvider = Provider<List<WishlistItem>>((ref) {
-  final allItems = ref.watch(wishlistProvider);
+  final allItems = ref.watch(wishlistProvider).asData?.value ?? [];
   final filter = ref.watch(filterProvider);
 
   var result = [...allItems];

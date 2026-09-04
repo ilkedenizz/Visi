@@ -2,30 +2,36 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import '../models/collection_model.dart';
 import 'storage_provider.dart';
 
-class CollectionNotifier extends Notifier<List<CollectionModel>> {
+class CollectionNotifier extends AsyncNotifier<List<CollectionModel>> {
   @override
-  List<CollectionModel> build() {
-    final storageService = ref.watch(storageServiceProvider);
-    return storageService.getCollections();
+  Future<List<CollectionModel>> build() async {
+    final repository = ref.watch(storageRepositoryProvider);
+    return await repository.loadCollections();
   }
 
   Future<void> addCollection(CollectionModel collection) async {
-    state = [...state, collection];
-    await ref.read(storageServiceProvider).saveCollections(state);
+    final current = state.asData?.value ?? [];
+    final updated = [...current, collection];
+    state = AsyncData(updated);
+    await ref.read(storageRepositoryProvider).saveCollections(updated);
   }
 
   Future<void> updateCollection(CollectionModel updatedCollection) async {
-    state = [
-      for (final col in state)
+    final current = state.asData?.value ?? [];
+    final updated = [
+      for (final col in current)
         if (col.id == updatedCollection.id) updatedCollection else col
     ];
-    await ref.read(storageServiceProvider).saveCollections(state);
+    state = AsyncData(updated);
+    await ref.read(storageRepositoryProvider).saveCollections(updated);
   }
 
   Future<void> deleteCollection(String id) async {
-    state = state.where((col) => col.id != id).toList();
-    await ref.read(storageServiceProvider).saveCollections(state);
+    final current = state.asData?.value ?? [];
+    final updated = current.where((col) => col.id != id).toList();
+    state = AsyncData(updated);
+    await ref.read(storageRepositoryProvider).saveCollections(updated);
   }
 }
 
-final collectionProvider = NotifierProvider<CollectionNotifier, List<CollectionModel>>(CollectionNotifier.new);
+final collectionProvider = AsyncNotifierProvider<CollectionNotifier, List<CollectionModel>>(CollectionNotifier.new);

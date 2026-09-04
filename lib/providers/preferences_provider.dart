@@ -3,42 +3,48 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import '../models/user_preferences.dart';
 import 'storage_provider.dart';
 
-class PreferencesNotifier extends Notifier<UserPreferences> {
+class PreferencesNotifier extends AsyncNotifier<UserPreferences> {
   @override
-  UserPreferences build() {
-    final storageService = ref.watch(storageServiceProvider);
-    return storageService.getPreferences();
+  Future<UserPreferences> build() async {
+    final repository = ref.watch(storageRepositoryProvider);
+    return await repository.loadPreferences();
   }
 
   Future<void> updateThemeMode(ThemeMode mode) async {
-    state = state.copyWith(themeMode: mode);
-    await ref.read(storageServiceProvider).savePreferences(state);
+    final updated = (state.asData?.value ?? const UserPreferences()).copyWith(themeMode: mode);
+    state = AsyncData(updated);
+    await ref.read(storageRepositoryProvider).savePreferences(updated);
   }
 
   Future<void> updateDefaultCurrency(String currency) async {
-    state = state.copyWith(defaultCurrency: currency);
-    await ref.read(storageServiceProvider).savePreferences(state);
+    final updated = (state.asData?.value ?? const UserPreferences()).copyWith(defaultCurrency: currency);
+    state = AsyncData(updated);
+    await ref.read(storageRepositoryProvider).savePreferences(updated);
   }
 
   Future<void> updateDefaultViewMode(ViewMode mode) async {
-    state = state.copyWith(defaultViewMode: mode);
-    await ref.read(storageServiceProvider).savePreferences(state);
+    final updated = (state.asData?.value ?? const UserPreferences()).copyWith(defaultViewMode: mode);
+    state = AsyncData(updated);
+    await ref.read(storageRepositoryProvider).savePreferences(updated);
   }
 
   Future<void> toggleNotifications(bool enabled) async {
-    state = state.copyWith(notificationsEnabled: enabled);
-    await ref.read(storageServiceProvider).savePreferences(state);
+    final updated = (state.asData?.value ?? const UserPreferences()).copyWith(notificationsEnabled: enabled);
+    state = AsyncData(updated);
+    await ref.read(storageRepositoryProvider).savePreferences(updated);
   }
 
   Future<void> completeOnboarding() async {
-    state = state.copyWith(hasCompletedOnboarding: true);
-    await ref.read(storageServiceProvider).savePreferences(state);
+    final updated = (state.asData?.value ?? const UserPreferences()).copyWith(hasCompletedOnboarding: true);
+    state = AsyncData(updated);
+    await ref.read(storageRepositoryProvider).savePreferences(updated);
   }
 
   Future<void> updateLastSelectedCollectionId(String collectionId) async {
-    state = state.copyWith(lastSelectedCollectionId: collectionId);
-    await ref.read(storageServiceProvider).savePreferences(state);
+    final updated = (state.asData?.value ?? const UserPreferences()).copyWith(lastSelectedCollectionId: collectionId);
+    state = AsyncData(updated);
+    await ref.read(storageRepositoryProvider).savePreferences(updated);
   }
 }
 
-final preferencesProvider = NotifierProvider<PreferencesNotifier, UserPreferences>(PreferencesNotifier.new);
+final preferencesProvider = AsyncNotifierProvider<PreferencesNotifier, UserPreferences>(PreferencesNotifier.new);

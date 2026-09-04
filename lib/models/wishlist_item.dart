@@ -36,6 +36,7 @@ class WishlistItem {
   final String id;
   final String title;
   final String? imagePath;
+  final String? imageId; // New field for web image storage
   final WishType type;
   final WishStatus status;
   final double price;
@@ -53,6 +54,7 @@ class WishlistItem {
     required this.id,
     required this.title,
     this.imagePath,
+    this.imageId,
     this.type = WishType.toOwn,
     this.status = WishStatus.wishing,
     this.price = 0.0,
@@ -67,10 +69,15 @@ class WishlistItem {
     required this.createdAt,
   });
 
+  /// Returns the image identifier used for display.
+  /// For web, this is the stored [imageId]; for Android, falls back to [imagePath].
+  String? get effectiveImageReference => imageId ?? imagePath;
+
   WishlistItem copyWith({
     String? id,
     String? title,
     String? imagePath,
+    String? imageId,
     WishType? type,
     WishStatus? status,
     double? price,
@@ -88,6 +95,7 @@ class WishlistItem {
       id: id ?? this.id,
       title: title ?? this.title,
       imagePath: imagePath ?? this.imagePath,
+      imageId: imageId ?? this.imageId,
       type: type ?? this.type,
       status: status ?? this.status,
       price: price ?? this.price,
@@ -108,6 +116,8 @@ class WishlistItem {
       'id': id,
       'title': title,
       'imagePath': imagePath,
+      // New field for web image storage
+      'imageId': imageId,
       'type': type.code,
       'status': status.code,
       'price': price,
@@ -128,6 +138,7 @@ class WishlistItem {
       id: map['id'] as String,
       title: map['title'] as String,
       imagePath: map['imagePath'] as String?,
+      imageId: map['imageId'] as String?,
       type: WishType.fromCode(map['type'] as String?),
       status: WishStatus.fromCode(map['status'] as String?),
       price: (map['price'] as num?)?.toDouble() ?? 0.0,
@@ -156,6 +167,7 @@ class WishlistItem {
         other.id == id &&
         other.title == title &&
         other.imagePath == imagePath &&
+        other.imageId == imageId &&
         other.type == type &&
         other.status == status &&
         other.price == price &&
@@ -175,6 +187,7 @@ class WishlistItem {
     return id.hashCode ^
         title.hashCode ^
         imagePath.hashCode ^
+        (imageId?.hashCode ?? 0) ^
         type.hashCode ^
         status.hashCode ^
         price.hashCode ^

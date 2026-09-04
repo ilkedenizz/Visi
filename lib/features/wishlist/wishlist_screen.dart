@@ -26,7 +26,7 @@ class WishlistScreen extends ConsumerWidget {
 
     final filteredItems = ref.watch(filteredWishlistProvider);
     final filterState = ref.watch(filterProvider);
-    final preferences = ref.watch(preferencesProvider);
+    final preferences = ref.watch(preferencesProvider).asData?.value ?? const UserPreferences();
     final viewMode = preferences.defaultViewMode;
 
     return Scaffold(
@@ -237,7 +237,7 @@ class FilterBottomSheet extends ConsumerWidget {
     final theme = Theme.of(context);
     final isDark = theme.brightness == Brightness.dark;
     final filterState = ref.watch(filterProvider);
-    final collections = ref.watch(collectionProvider);
+    final collections = ref.watch(collectionProvider).asData?.value ?? [];
 
     return Container(
       decoration: BoxDecoration(

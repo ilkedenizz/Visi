@@ -4,25 +4,16 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 import 'core/router/app_router.dart';
 import 'core/theme/app_theme.dart';
+import 'models/user_preferences.dart';
 import 'providers/preferences_provider.dart';
-import 'providers/storage_provider.dart';
-import 'services/storage_service.dart';
+
 
 void main() async {
   WidgetsFlutterBinding.ensureInitialized();
 
-  // Initialize local persistence
-  final storageService = await StorageService.init();
-
-  runApp(
-    ProviderScope(
-      overrides: [
-        storageServiceProvider.overrideWithValue(storageService),
-      ],
-      child: const VisiApp(),
-    ),
-  );
+  runApp(const ProviderScope(child: VisiApp()));
 }
+
 
 class VisiApp extends ConsumerWidget {
   const VisiApp({super.key});
@@ -30,7 +21,8 @@ class VisiApp extends ConsumerWidget {
   @override
   Widget build(BuildContext context, WidgetRef ref) {
     final router = ref.watch(appRouterProvider);
-    final preferences = ref.watch(preferencesProvider);
+    final prefsAsync = ref.watch(preferencesProvider);
+    final preferences = prefsAsync.asData?.value ?? const UserPreferences();
 
     return MaterialApp.router(
       title: 'Vişi',

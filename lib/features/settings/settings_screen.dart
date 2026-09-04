@@ -15,7 +15,8 @@ class SettingsScreen extends ConsumerWidget {
   Widget build(BuildContext context, WidgetRef ref) {
     final theme = Theme.of(context);
     final isDark = theme.brightness == Brightness.dark;
-    final prefs = ref.watch(preferencesProvider);
+    final prefsAsync = ref.watch(preferencesProvider);
+    final prefs = prefsAsync.asData?.value ?? const UserPreferences();
 
     return Scaffold(
       appBar: AppBar(

@@ -22,8 +22,8 @@ class HomeScreen extends ConsumerWidget {
     final theme = Theme.of(context);
     final isDark = theme.brightness == Brightness.dark;
 
-    final wishlist = ref.watch(wishlistProvider);
-    final collections = ref.watch(collectionProvider);
+    final wishlist = ref.watch(wishlistProvider).asData?.value ?? [];
+    final collections = ref.watch(collectionProvider).asData?.value ?? [];
 
     final recentItems = wishlist.take(6).toList();
 

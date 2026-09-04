@@ -3,6 +3,7 @@ import 'package:flutter_test/flutter_test.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 import 'package:visi/core/utils/url_validator.dart';
 import 'package:visi/models/collection_model.dart';
+import 'package:visi/models/price_alert.dart';
 import 'package:visi/models/user_preferences.dart';
 import 'package:visi/models/wish_status.dart';
 import 'package:visi/models/wish_type.dart';
@@ -68,6 +69,24 @@ void main() {
       expect(restored.id, equals('col_1'));
       expect(restored.name, equals('Fashion'));
       expect(restored.emoji, equals('👗'));
+    });
+
+    test('PriceAlert json serialization works correctly', () {
+      final alert = PriceAlert(
+        wishId: 'wish_100',
+        enabled: true,
+        lastKnownPrice: 2500.0,
+        targetPrice: 2000.0,
+      );
+
+      final jsonStr = alert.toJson();
+      final restored = PriceAlert.fromJson(jsonStr);
+
+      expect(restored.wishId, equals('wish_100'));
+      expect(restored.enabled, isTrue);
+      expect(restored.lastKnownPrice, equals(2500.0));
+      expect(restored.targetPrice, equals(2000.0));
+      expect(restored.status, equals(PriceAlertStatus.idle));
     });
   });
 

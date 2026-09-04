@@ -18,10 +18,12 @@ import '../../providers/preferences_provider.dart';
 
 class _RouterRefreshNotifier extends ChangeNotifier {
   _RouterRefreshNotifier(Ref ref) {
-    ref.listen<UserPreferences>(
+    ref.listen<AsyncValue<UserPreferences>>(
       preferencesProvider,
       (previous, next) {
-        if (previous?.hasCompletedOnboarding != next.hasCompletedOnboarding) {
+        final prevVal = previous?.asData?.value.hasCompletedOnboarding;
+        final nextVal = next.asData?.value.hasCompletedOnboarding;
+        if (prevVal != nextVal) {
           notifyListeners();
         }
       },
@@ -36,7 +38,7 @@ final appRouterProvider = Provider<GoRouter>((ref) {
     initialLocation: '/',
     refreshListenable: refreshNotifier,
     redirect: (context, state) {
-      final prefs = ref.read(preferencesProvider);
+      final prefs = ref.read(preferencesProvider).asData?.value ?? const UserPreferences();
       final isOnboarding = state.matchedLocation == '/onboarding';
       if (!prefs.hasCompletedOnboarding && !isOnboarding) {
         return '/onboarding';

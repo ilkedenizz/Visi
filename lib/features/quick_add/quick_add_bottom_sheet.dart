@@ -12,6 +12,7 @@ import '../../providers/preferences_provider.dart';
 import '../../providers/wishlist_provider.dart';
 import '../../widgets/visi_cherry_logo.dart';
 import '../../widgets/visi_feedback.dart';
+import '../../models/user_preferences.dart';
 
 class QuickAddBottomSheet extends ConsumerStatefulWidget {
   const QuickAddBottomSheet({super.key});
@@ -42,7 +43,7 @@ class QuickAddBottomSheet extends ConsumerStatefulWidget {
     }
 
     final normalized = UrlValidator.normalizeForComparison(extractedUrl);
-    final wishlist = ref.read(wishlistProvider);
+    final wishlist = ref.read(wishlistProvider).asData?.value ?? [];
     final existingIndex = wishlist.indexWhere((item) {
       if (item.productUrl == null || item.productUrl!.isEmpty) return false;
       return UrlValidator.normalizeForComparison(item.productUrl!) == normalized;
@@ -151,8 +152,8 @@ class QuickAddBottomSheet extends ConsumerStatefulWidget {
 
   /// Create temporary item and open edit screen
   static void _createAndNavigateToEdit(BuildContext context, WidgetRef ref, String url) {
-    final prefs = ref.read(preferencesProvider);
-    final collections = ref.read(collectionProvider);
+    final prefs = ref.read(preferencesProvider).asData?.value ?? const UserPreferences();
+    final collections = ref.read(collectionProvider).asData?.value ?? [];
     final defaultCollectionId = prefs.lastSelectedCollectionId ??
         (collections.isNotEmpty ? collections.first.id : '');
 
@@ -237,7 +238,7 @@ class _QuickAddBottomSheetState extends ConsumerState<QuickAddBottomSheet> {
 
     final formattedUrl = validation.formattedUrl!;
     final normalized = UrlValidator.normalizeForComparison(formattedUrl);
-    final wishlist = ref.read(wishlistProvider);
+    final wishlist = ref.read(wishlistProvider).asData?.value ?? [];
 
     if (!ignoreDuplicate) {
       final existingIndex = wishlist.indexWhere((item) {

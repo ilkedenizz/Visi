@@ -5,6 +5,7 @@ import 'package:go_router/go_router.dart';
 
 import '../../core/constants/app_constants.dart';
 import '../../core/theme/app_colors.dart';
+import '../../models/user_preferences.dart';
 import '../../models/wish_status.dart';
 import '../../providers/collection_provider.dart';
 import '../../providers/preferences_provider.dart';
@@ -19,9 +20,9 @@ class ProfileScreen extends ConsumerWidget {
   Widget build(BuildContext context, WidgetRef ref) {
     final theme = Theme.of(context);
     final isDark = theme.brightness == Brightness.dark;
-    final prefs = ref.watch(preferencesProvider);
-    final wishes = ref.watch(wishlistProvider);
-    final collections = ref.watch(collectionProvider);
+    final prefs = ref.watch(preferencesProvider).asData?.value ?? const UserPreferences();
+    final wishes = ref.watch(wishlistProvider).asData?.value ?? [];
+    final collections = ref.watch(collectionProvider).asData?.value ?? [];
 
     final totalWishes = wishes.length;
     final fulfilledWishes = wishes.where((w) => w.status == WishStatus.fulfilled).length;

@@ -1,14 +1,18 @@
 import 'dart:io';
+import 'dart:typed_data';
+import 'package:flutter/foundation.dart' show kIsWeb;
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:image_picker/image_picker.dart';
 import 'package:uuid/uuid.dart';
 
 import '../../core/theme/app_colors.dart';
+import '../../models/user_preferences.dart';
 import '../../models/wish_status.dart';
 import '../../models/wish_type.dart';
 import '../../models/wishlist_item.dart';
 import '../../providers/collection_provider.dart';
+import '../../providers/image_repository_provider.dart';
 import '../../providers/preferences_provider.dart';
 import '../../providers/wishlist_provider.dart';
 import '../../services/image_storage_service.dart';
@@ -46,6 +50,7 @@ class _AddEditWishlistItemScreenState extends ConsumerState<AddEditWishlistItemS
   late ItemPriority _priority;
   late bool _isFavorite;
   XFile? _selectedImageFile;
+  Uint8List? _selectedImageBytes;
 
   @override
   void initState() {
@@ -63,10 +68,10 @@ class _AddEditWishlistItemScreenState extends ConsumerState<AddEditWishlistItemS
     _status = item?.status ?? WishStatus.wishing;
     _targetDate = item?.targetDate;
 
-    final prefs = ref.read(preferencesProvider);
+    final prefs = ref.read(preferencesProvider).asData?.value ?? const UserPreferences();
     _currency = item?.currency ?? prefs.defaultCurrency;
 
-    final collections = ref.read(collectionProvider);
+    final collections = ref.read(collectionProvider).asData?.value ?? [];
     final lastColId = prefs.lastSelectedCollectionId;
     _collectionId = item?.collectionId ??
         (lastColId != null && collections.any((c) => c.id == lastColId)
@@ -98,15 +103,129 @@ class _AddEditWishlistItemScreenState extends ConsumerState<AddEditWishlistItemS
       if (picked != null) {
         setState(() {
           _selectedImageFile = picked;
-          _imagePathController.text = picked.path;
+          _imagePathController.text = '';
         });
+        if (kIsWeb) {
+          final bytes = await picked.readAsBytes();
+          setState(() {
+            _selectedImageBytes = bytes;
+          });
+        } else {
+          _imagePathController.text = picked.path;
+        }
       }
-    } catch (_) {}
+    } catch (e) {
+      if (mounted) {
+        VisiFeedback.showError(context, 'Görsel seçilirken bir hata oluştu: $e');
+      }
+    }
+  }
+
+  Widget _buildImagePickerArea(bool isDark, ThemeData theme) {
+    final hasImage = _imagePathController.text.trim().isNotEmpty || _selectedImageBytes != null;
+
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        Text('GÖRSELLEŞTİR', style: theme.textTheme.labelSmall),
+        const SizedBox(height: 8),
+        if (hasImage) ...[
+          Container(
+            height: 200,
+            width: double.infinity,
+            decoration: BoxDecoration(
+              borderRadius: BorderRadius.circular(20),
+              border: Border.all(
+                color: isDark ? AppColors.darkCardBorder : AppColors.lightCardBorder,
+              ),
+            ),
+            child: ClipRRect(
+              borderRadius: BorderRadius.circular(20),
+              child: _selectedImageBytes != null
+                  ? Image.memory(_selectedImageBytes!, fit: BoxFit.cover)
+                  : VisiImage(imageUrl: _imagePathController.text),
+            ),
+          ),
+          const SizedBox(height: 10),
+          Row(
+            children: [
+              Expanded(
+                child: OutlinedButton.icon(
+                  onPressed: _pickImageFromGallery,
+                  icon: const Icon(Icons.photo_library_outlined, size: 18),
+                  label: const Text('Görseli değiştir', style: TextStyle(fontSize: 13, fontWeight: FontWeight.w600)),
+                  style: OutlinedButton.styleFrom(
+                    padding: const EdgeInsets.symmetric(vertical: 12),
+                    foregroundColor: AppColors.cherryAccent,
+                    side: const BorderSide(color: AppColors.cherryAccent),
+                    shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(14)),
+                  ),
+                ),
+              ),
+              const SizedBox(width: 10),
+              TextButton.icon(
+                onPressed: _removeImage,
+                icon: const Icon(Icons.delete_outline_rounded, size: 18, color: AppColors.cherryAccent),
+                label: const Text('Görseli kaldır', style: TextStyle(color: AppColors.cherryAccent, fontWeight: FontWeight.w600)),
+              ),
+            ],
+          ),
+        ] else ...[
+          InkWell(
+            onTap: _pickImageFromGallery,
+            borderRadius: BorderRadius.circular(20),
+            child: Container(
+              height: 130,
+              width: double.infinity,
+              decoration: BoxDecoration(
+                color: isDark ? AppColors.darkCard : AppColors.blushPink.withValues(alpha: 0.4),
+                borderRadius: BorderRadius.circular(20),
+                border: Border.all(
+                  color: isDark ? AppColors.darkCardBorder : AppColors.cherryAccent.withValues(alpha: 0.3),
+                  width: 1.5,
+                ),
+              ),
+              child: Column(
+                mainAxisAlignment: MainAxisAlignment.center,
+                children: [
+                  Container(
+                    padding: const EdgeInsets.all(10),
+                    decoration: const BoxDecoration(
+                      color: AppColors.cherryAccent,
+                      shape: BoxShape.circle,
+                    ),
+                    child: const Icon(Icons.add_a_photo_outlined, color: Colors.white, size: 20),
+                  ),
+                  const SizedBox(height: 8),
+                  Text(
+                    '+ Dileğini görselleştir',
+                    style: theme.textTheme.titleMedium?.copyWith(
+                      fontWeight: FontWeight.w700,
+                      fontSize: 15,
+                      color: isDark ? AppColors.darkTextPrimary : AppColors.lightTextPrimary,
+                    ),
+                  ),
+                  const SizedBox(height: 2),
+                  Text(
+                    'Kendi fotoğrafını veya ilham verici bir görsel ekle',
+                    style: theme.textTheme.bodyMedium?.copyWith(
+                      fontSize: 12,
+                      color: isDark ? AppColors.darkTextSecondary : AppColors.lightTextSecondary,
+                    ),
+                  ),
+                ],
+              ),
+            ),
+          ),
+        ],
+      ],
+    );
   }
 
   void _removeImage() {
     setState(() {
       _selectedImageFile = null;
+      _selectedImageBytes = null;
       _imagePathController.text = '';
     });
   }
@@ -138,7 +257,6 @@ class _AddEditWishlistItemScreenState extends ConsumerState<AddEditWishlistItemS
     if (!_formKey.currentState!.validate()) return;
 
     final title = _titleController.text.trim();
-    final price = double.tryParse(_priceController.text.trim()) ?? 0.0;
     final store = _storeController.text.trim().isNotEmpty ? _storeController.text.trim() : null;
     final productUrl = _productUrlController.text.trim().isNotEmpty ? _productUrlController.text.trim() : null;
     final notes = _notesController.text.trim().isNotEmpty ? _notesController.text.trim() : null;
@@ -147,16 +265,29 @@ class _AddEditWishlistItemScreenState extends ConsumerState<AddEditWishlistItemS
     final id = isEdit ? widget.initialItem!.id : const Uuid().v4();
     final createdAt = isEdit ? widget.initialItem!.createdAt : DateTime.now();
 
-    String? finalImagePath = _imagePathController.text.trim().isNotEmpty ? _imagePathController.text.trim() : null;
+    final double priceValue = double.tryParse(_priceController.text.trim()) ?? 0.0;
+
+    String? finalImageReference = isEdit ? (kIsWeb ? widget.initialItem?.imageId : widget.initialItem?.imagePath) : null;
 
     if (_selectedImageFile != null) {
-      final savedPath = await ImageStorageService.saveImage(File(_selectedImageFile!.path));
-      if (isEdit && widget.initialItem?.imagePath != null && widget.initialItem!.imagePath != savedPath) {
-        await ImageStorageService.deleteLocalImage(widget.initialItem!.imagePath);
+      if (kIsWeb) {
+        final bytes = await _selectedImageFile!.readAsBytes();
+        _selectedImageBytes = bytes;
+        final repo = ref.read(imageRepositoryProvider);
+        final imageId = await repo.saveImage(bytes);
+        finalImageReference = imageId;
+      } else {
+        final savedPath = await ImageStorageService.saveImage(File(_selectedImageFile!.path));
+        if (isEdit && widget.initialItem?.imagePath != null && widget.initialItem!.imagePath != savedPath) {
+          await ImageStorageService.deleteLocalImage(widget.initialItem!.imagePath!);
+        }
+        finalImageReference = savedPath;
       }
-      finalImagePath = savedPath;
-    } else if (isEdit && widget.initialItem?.imagePath != null && finalImagePath == null) {
-      await ImageStorageService.deleteLocalImage(widget.initialItem!.imagePath);
+    } else if (isEdit && widget.initialItem?.imagePath != null && _imagePathController.text.isEmpty && _selectedImageBytes == null) {
+      if (!kIsWeb) {
+        await ImageStorageService.deleteLocalImage(widget.initialItem!.imagePath!);
+      }
+      finalImageReference = null;
     }
 
     final newItem = WishlistItem(
@@ -164,10 +295,11 @@ class _AddEditWishlistItemScreenState extends ConsumerState<AddEditWishlistItemS
       title: title,
       type: _type,
       status: _status,
-      price: _type == WishType.toOwn ? price : 0.0,
+      price: _type == WishType.toOwn ? priceValue : 0.0,
       currency: _currency,
       store: _type == WishType.toOwn ? store : null,
-      imagePath: finalImagePath,
+      imagePath: kIsWeb ? null : finalImageReference,
+      imageId: kIsWeb ? finalImageReference : null,
       productUrl: _type == WishType.toOwn ? productUrl : null,
       collectionId: _collectionId,
       notes: notes,
@@ -199,7 +331,7 @@ class _AddEditWishlistItemScreenState extends ConsumerState<AddEditWishlistItemS
   Widget build(BuildContext context) {
     final theme = Theme.of(context);
     final isDark = theme.brightness == Brightness.dark;
-    final collections = ref.watch(collectionProvider);
+    final collections = ref.watch(collectionProvider).asData?.value ?? [];
     final isEdit = widget.initialItem != null;
 
     return Scaffold(
@@ -532,105 +664,6 @@ class _AddEditWishlistItemScreenState extends ConsumerState<AddEditWishlistItemS
           ),
         ),
       ),
-    );
-  }
-
-  Widget _buildImagePickerArea(bool isDark, ThemeData theme) {
-    final hasImage = _imagePathController.text.trim().isNotEmpty;
-
-    return Column(
-      crossAxisAlignment: CrossAxisAlignment.start,
-      children: [
-        Text('GÖRSELLEŞTİR', style: theme.textTheme.labelSmall),
-        const SizedBox(height: 8),
-        if (hasImage) ...[
-          Container(
-            height: 200,
-            width: double.infinity,
-            decoration: BoxDecoration(
-              borderRadius: BorderRadius.circular(20),
-              border: Border.all(
-                color: isDark ? AppColors.darkCardBorder : AppColors.lightCardBorder,
-              ),
-            ),
-            child: ClipRRect(
-              borderRadius: BorderRadius.circular(20),
-              child: VisiImage(imageUrl: _imagePathController.text),
-            ),
-          ),
-          const SizedBox(height: 10),
-          Row(
-            children: [
-              Expanded(
-                child: OutlinedButton.icon(
-                  onPressed: _pickImageFromGallery,
-                  icon: const Icon(Icons.photo_library_outlined, size: 18),
-                  label: const Text('Görseli değiştir', style: TextStyle(fontSize: 13, fontWeight: FontWeight.w600)),
-                  style: OutlinedButton.styleFrom(
-                    padding: const EdgeInsets.symmetric(vertical: 12),
-                    foregroundColor: AppColors.cherryAccent,
-                    side: const BorderSide(color: AppColors.cherryAccent),
-                    shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(14)),
-                  ),
-                ),
-              ),
-              const SizedBox(width: 10),
-              TextButton.icon(
-                onPressed: _removeImage,
-                icon: const Icon(Icons.delete_outline_rounded, size: 18, color: AppColors.cherryAccent),
-                label: const Text('Görseli kaldır', style: TextStyle(color: AppColors.cherryAccent, fontWeight: FontWeight.w600)),
-              ),
-            ],
-          ),
-        ] else ...[
-          InkWell(
-            onTap: _pickImageFromGallery,
-            borderRadius: BorderRadius.circular(20),
-            child: Container(
-              height: 130,
-              width: double.infinity,
-              decoration: BoxDecoration(
-                color: isDark ? AppColors.darkCard : AppColors.blushPink.withValues(alpha: 0.4),
-                borderRadius: BorderRadius.circular(20),
-                border: Border.all(
-                  color: isDark ? AppColors.darkCardBorder : AppColors.cherryAccent.withValues(alpha: 0.3),
-                  width: 1.5,
-                ),
-              ),
-              child: Column(
-                mainAxisAlignment: MainAxisAlignment.center,
-                children: [
-                  Container(
-                    padding: const EdgeInsets.all(10),
-                    decoration: const BoxDecoration(
-                      color: AppColors.cherryAccent,
-                      shape: BoxShape.circle,
-                    ),
-                    child: const Icon(Icons.add_a_photo_outlined, color: Colors.white, size: 20),
-                  ),
-                  const SizedBox(height: 8),
-                  Text(
-                    '+ Dileğini görselleştir',
-                    style: theme.textTheme.titleMedium?.copyWith(
-                      fontWeight: FontWeight.w700,
-                      fontSize: 15,
-                      color: isDark ? AppColors.darkTextPrimary : AppColors.lightTextPrimary,
-                    ),
-                  ),
-                  const SizedBox(height: 2),
-                  Text(
-                    'Kendi fotoğrafını veya ilham verici bir görsel ekle',
-                    style: theme.textTheme.bodyMedium?.copyWith(
-                      fontSize: 12,
-                      color: isDark ? AppColors.darkTextSecondary : AppColors.lightTextSecondary,
-                    ),
-                  ),
-                ],
-              ),
-            ),
-          ),
-        ],
-      ],
     );
   }
 }

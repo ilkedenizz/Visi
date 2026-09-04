@@ -1,6 +1,7 @@
 import 'package:shared_preferences/shared_preferences.dart';
 import '../core/constants/app_constants.dart';
 import '../models/collection_model.dart';
+import '../models/price_alert.dart';
 import '../models/user_preferences.dart';
 import '../models/wishlist_item.dart';
 import 'mock_data.dart';
@@ -85,10 +86,28 @@ class StorageService {
     return await _prefs.setString(AppConstants.storageKeyPreferences, preferences.toJson());
   }
 
+  // --- Price Alerts ---
+  List<PriceAlert> getPriceAlerts() {
+    final rawList = _prefs.getStringList(AppConstants.storageKeyPriceAlerts);
+    if (rawList == null || rawList.isEmpty) return [];
+
+    try {
+      return rawList.map((jsonStr) => PriceAlert.fromJson(jsonStr)).toList();
+    } catch (_) {
+      return [];
+    }
+  }
+
+  Future<bool> savePriceAlerts(List<PriceAlert> alerts) async {
+    final jsonList = alerts.map((alert) => alert.toJson()).toList();
+    return await _prefs.setStringList(AppConstants.storageKeyPriceAlerts, jsonList);
+  }
+
   Future<void> clearAllData() async {
     await _prefs.remove(AppConstants.storageKeyWishlistItems);
     await _prefs.remove(AppConstants.storageKeyCollections);
     await _prefs.remove(AppConstants.storageKeyPreferences);
+    await _prefs.remove(AppConstants.storageKeyPriceAlerts);
     await _prefs.setBool(AppConstants.storageKeyIsFirstLaunch, true);
   }
 }

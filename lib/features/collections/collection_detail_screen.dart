@@ -48,8 +48,8 @@ class CollectionDetailScreen extends ConsumerWidget {
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
-    final collections = ref.watch(collectionProvider);
-    final allItems = ref.watch(wishlistProvider);
+    final collections = ref.watch(collectionProvider).asData?.value ?? [];
+    final allItems = ref.watch(wishlistProvider).asData?.value ?? [];
 
     final collection = collections.firstWhere(
       (c) => c.id == collectionId,
