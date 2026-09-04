@@ -25,7 +25,7 @@ class VisiApp extends ConsumerWidget {
     final preferences = prefsAsync.asData?.value ?? const UserPreferences();
 
     return MaterialApp.router(
-      title: 'Vişi',
+      title: 'Visi',
       debugShowCheckedModeBanner: false,
       theme: AppTheme.lightTheme,
       darkTheme: AppTheme.darkTheme,

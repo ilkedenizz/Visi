@@ -1,4 +1,4 @@
-name: Deploy Vişi PWA to GitHub Pages
+name: Deploy Visi PWA to GitHub Pages
 
 on:
   push:

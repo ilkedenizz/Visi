@@ -53,7 +53,7 @@ class _OnboardingScreenState extends ConsumerState<OnboardingScreen> {
                       const VisiCherryLogo(size: 24, color: AppColors.cherryAccent),
                       const SizedBox(width: 8),
                       Text(
-                        'VIŞI',
+                        'VISI',
                         style: TextStyle(
                           fontSize: 14,
                           fontWeight: FontWeight.w800,
@@ -148,7 +148,7 @@ class _OnboardingScreenState extends ConsumerState<OnboardingScreen> {
                         ),
                       ),
                       child: Text(
-                        _currentPage == 2 ? 'Vişi\'yi Keşfet ✨' : 'Devam Et',
+                        _currentPage == 2 ? 'Visi\'yi Keşfet ✨' : 'Devam Et',
                         style: const TextStyle(
                           fontSize: 16,
                           fontWeight: FontWeight.w700,
@@ -205,7 +205,7 @@ class _OnboardingScreenState extends ConsumerState<OnboardingScreen> {
           const SizedBox(height: 14),
 
           Text(
-            'Bir gün yapmak, öğrenmek veya görmek istediğin şeyleri Vişi\'de biriktir.',
+            'Bir gün yapmak, öğrenmek veya görmek istediğin şeyleri Visi\'de biriktir.',
             textAlign: TextAlign.center,
             style: theme.textTheme.bodyMedium?.copyWith(
               fontSize: 15,

@@ -113,7 +113,7 @@ class VisiImage extends StatelessWidget {
             ),
             const SizedBox(height: 6),
             Text(
-              'VIŞI',
+              'VISI',
               style: TextStyle(
                 fontSize: 10,
                 fontWeight: FontWeight.w800,

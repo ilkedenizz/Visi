@@ -65,7 +65,7 @@ class SettingsScreen extends ConsumerWidget {
                       const Divider(height: 1, indent: 16, endIndent: 16),
                       ListTile(
                         leading: const Icon(Icons.nightlight_round, size: 20),
-                        title: const Text('Karanlık Tema (Vişi Plum)'),
+                        title: const Text('Karanlık Tema (Visi Plum)'),
                         trailing: prefs.themeMode == ThemeMode.dark
                             ? const Icon(Icons.check_circle_rounded, color: AppColors.cherryAccent)
                             : null,

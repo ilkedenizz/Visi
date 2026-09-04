@@ -16,7 +16,7 @@ import 'package:visi/widgets/visi_cherry_logo.dart';
 void main() {
   TestWidgetsFlutterBinding.ensureInitialized();
 
-  group('Vişi Personal Wish Models & Migration Test', () {
+  group('Visi Personal Wish Models & Migration Test', () {
     test('WishlistItem json serialization and defaults work correctly', () {
       final now = DateTime.now();
       final item = WishlistItem(
@@ -90,7 +90,7 @@ void main() {
     });
   });
 
-  group('Vişi Turkish Search & Normalization Test', () {
+  group('Visi Turkish Search & Normalization Test', () {
     test('normalizeTurkishText handles Turkish characters correctly', () {
       expect(normalizeTurkishText('Vişne'), equals('visne'));
       expect(normalizeTurkishText('İSTANBUL'), equals('istanbul'));
@@ -99,7 +99,7 @@ void main() {
     });
   });
 
-  group('Vişi Quick Add & UrlValidator Test', () {
+  group('Visi Quick Add & UrlValidator Test', () {
     test('UrlValidator correctly validates valid HTTP/HTTPS URLs', () {
       final res1 = UrlValidator.validate('https://zara.com/tr/tr/elbise-p0123.html');
       expect(res1.isValid, isTrue);
@@ -134,7 +134,7 @@ void main() {
     });
   });
 
-  group('Vişi Share Intent URL Extraction Test', () {
+  group('Visi Share Intent URL Extraction Test', () {
     test('UrlValidator.extractUrl extracts clean URL from arbitrary shared text', () {
       final url1 = UrlValidator.extractUrl('https://www.zara.com/tr/tr/elbise-p0123.html');
       expect(url1, equals('https://www.zara.com/tr/tr/elbise-p0123.html'));
@@ -154,7 +154,7 @@ void main() {
     });
   });
 
-  group('Vişi StorageService & Persistence Test', () {
+  group('Visi StorageService & Persistence Test', () {
     test('StorageService initializes seed data on first launch', () async {
       SharedPreferences.setMockInitialValues({});
       final storage = await StorageService.init();
@@ -192,7 +192,7 @@ void main() {
     });
   });
 
-  group('Vişi Default Theme & Preferences Test', () {
+  group('Visi Default Theme & Preferences Test', () {
     test('UserPreferences defaults strictly to ThemeMode.light on fresh launch', () {
       const prefs = UserPreferences();
       expect(prefs.themeMode, equals(ThemeMode.light));
@@ -202,7 +202,7 @@ void main() {
     });
   });
 
-  group('Vişi Image Storage & Persistence Test', () {
+  group('Visi Image Storage & Persistence Test', () {
     test('ImageStorageService gracefully handles non-existent and empty paths', () async {
       await ImageStorageService.deleteLocalImage(null);
       await ImageStorageService.deleteLocalImage('');
@@ -230,7 +230,7 @@ void main() {
     });
   });
 
-  group('Vişi Widgets Test', () {
+  group('Visi Widgets Test', () {
     testWidgets('VisiCherryLogo renders custom painter without throwing', (WidgetTester tester) async {
       await tester.pumpWidget(
         const MaterialApp(

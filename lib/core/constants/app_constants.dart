@@ -1,7 +1,7 @@
 class AppConstants {
   AppConstants._();
 
-  static const String appName = 'Vişi';
+  static const String appName = 'Visi';
   static const String appTagline = 'Senin kişisel dilek listen';
 
   // Storage Keys

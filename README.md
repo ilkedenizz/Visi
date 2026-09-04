@@ -1,18 +1,18 @@
-# 🍒 Vişi
+# 🍒 Visi
 
 ### Your Personal Wish Journal
 
-Vişi is a personal digital wish journal for the things you want to **do, learn, visit, own, or dream about**.
+Visi is a personal digital wish journal for the things you want to **do, learn, visit, own, or dream about**.
 
-Instead of being just another shopping wishlist, Vişi gives your wishes a place to grow — from a simple idea to something that actually becomes real.
+Instead of being just another shopping wishlist, Visi gives your wishes a place to grow — from a simple idea to something that actually becomes real.
 
 > **Dream it. Save it. Make it real.**
 
 ---
 
-## ✨ What is Vişi?
+## ✨ What is Visi?
 
-Vişi helps you collect the things that matter to you in one beautiful, personal space.
+Visi helps you collect the things that matter to you in one beautiful, personal space.
 
 Your wishes can be anything:
 
@@ -56,7 +56,7 @@ Download the latest APK from the project's **Releases / itch.io page**.
 
 ### iPhone & iPad
 
-Vişi can be used as a Progressive Web App (PWA).
+Visi can be used as a Progressive Web App (PWA).
 
 Open:
 
@@ -70,7 +70,7 @@ No App Store installation or Apple Developer account is required.
 
 ### Web
 
-Vişi is also available directly from the browser:
+Visi is also available directly from the browser:
 
 **https://ilkedenizz.github.io/Visi/**
 
@@ -78,7 +78,7 @@ Vişi is also available directly from the browser:
 
 ## 🎨 Design
 
-Vişi is designed around a calm, personal and editorial aesthetic.
+Visi is designed around a calm, personal and editorial aesthetic.
 
 The visual language uses:
 
@@ -110,9 +110,9 @@ The application follows a local-first approach, keeping core wish and collection
 
 ## 🔔 Price Alerts
 
-For wishes in the **To Own** category, Vişi can track a product URL and its known price.
+For wishes in the **To Own** category, Visi can track a product URL and its known price.
 
-When a lower price is detected, Vişi can notify the user about the price drop.
+When a lower price is detected, Visi can notify the user about the price drop.
 
 Price checking currently uses structured information available on supported product pages. Not every website is guaranteed to work because websites can use different layouts, dynamic rendering, or anti-bot protections.
 
@@ -120,7 +120,7 @@ Price checking currently uses structured information available on supported prod
 
 ## 🚧 Project Status
 
-Vişi is an actively developed personal project.
+Visi is an actively developed personal project.
 
 Current focus:
 
@@ -159,7 +159,7 @@ Current focus:
 
 ## 🤍 Built With
 
-Vişi is built with Flutter as a personal project exploring beautiful, local-first and cross-platform applications.
+Visi is built with Flutter as a personal project exploring beautiful, local-first and cross-platform applications.
 
 Made with 🍒 and Flutter.
 

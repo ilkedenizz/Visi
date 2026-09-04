@@ -52,7 +52,7 @@ class HomeScreen extends ConsumerWidget {
                                 const VisiCherryLogo(size: 14, color: AppColors.cherryAccent),
                                 const SizedBox(width: 6),
                                 Text(
-                                  'VIŞI DILEK DEFTERI',
+                                  'VISI DILEK DEFTERI',
                                   style: TextStyle(
                                     color: isDark ? AppColors.cherryAccentDark : AppColors.cherryAccent,
                                     fontSize: 11,
