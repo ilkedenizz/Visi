@@ -117,8 +117,9 @@ class QuickAddBottomSheet extends ConsumerStatefulWidget {
                   ),
                   onPressed: () {
                     HapticFeedback.selectionClick();
+                    final router = GoRouter.of(context);
                     Navigator.pop(ctx);
-                    context.push('/item/${duplicateItem.id}');
+                    router.push('/item/${duplicateItem.id}');
                   },
                 ),
               ),
@@ -137,8 +138,9 @@ class QuickAddBottomSheet extends ConsumerStatefulWidget {
                   ),
                   onPressed: () {
                     HapticFeedback.selectionClick();
+                    final router = GoRouter.of(context);
                     Navigator.pop(ctx);
-                    _createAndNavigateToEdit(context, ref, formattedUrl);
+                    _createAndNavigateToEdit(context, ref, formattedUrl, router: router);
                   },
                   child: const Text('Yine de ekle', style: TextStyle(fontWeight: FontWeight.w700)),
                 ),
@@ -151,7 +153,13 @@ class QuickAddBottomSheet extends ConsumerStatefulWidget {
   }
 
   /// Create temporary item and open edit screen
-  static void _createAndNavigateToEdit(BuildContext context, WidgetRef ref, String url) {
+  static void _createAndNavigateToEdit(
+    BuildContext context,
+    WidgetRef ref,
+    String url, {
+    GoRouter? router,
+  }) {
+    final navRouter = router ?? GoRouter.of(context);
     final prefs = ref.read(preferencesProvider).asData?.value ?? const UserPreferences();
     final collections = ref.read(collectionProvider).asData?.value ?? [];
     final defaultCollectionId = prefs.lastSelectedCollectionId ??
@@ -169,8 +177,10 @@ class QuickAddBottomSheet extends ConsumerStatefulWidget {
     );
 
     ref.read(wishlistProvider.notifier).addItem(newItem);
-    VisiFeedback.showSuccess(context, 'Listeye eklendi 🍒');
-    context.push('/edit-item', extra: newItem);
+    if (context.mounted) {
+      VisiFeedback.showSuccess(context, 'Listeye eklendi 🍒');
+    }
+    navRouter.push('/edit-item', extra: newItem);
   }
 
   @override
@@ -255,8 +265,9 @@ class _QuickAddBottomSheetState extends ConsumerState<QuickAddBottomSheet> {
       }
     }
 
+    final router = GoRouter.of(context);
     Navigator.pop(context);
-    QuickAddBottomSheet._createAndNavigateToEdit(context, ref, formattedUrl);
+    QuickAddBottomSheet._createAndNavigateToEdit(context, ref, formattedUrl, router: router);
   }
 
   @override
@@ -455,8 +466,9 @@ class _QuickAddBottomSheetState extends ConsumerState<QuickAddBottomSheet> {
           child: InkWell(
             onTap: () {
               HapticFeedback.selectionClick();
+              final router = GoRouter.of(context);
               Navigator.pop(context);
-              context.push('/add-item');
+              router.push('/add-item');
             },
             borderRadius: BorderRadius.circular(20),
             child: Container(
@@ -673,8 +685,9 @@ class _QuickAddBottomSheetState extends ConsumerState<QuickAddBottomSheet> {
             ),
             onPressed: () {
               HapticFeedback.selectionClick();
+              final router = GoRouter.of(context);
               Navigator.pop(context);
-              context.push('/item/${_duplicateItem!.id}');
+              router.push('/item/${_duplicateItem!.id}');
             },
           ),
         ),
